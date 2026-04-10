@@ -1,0 +1,37 @@
+% code.tex — typeset source code files
+% Include in parent document with: \input{code}
+% Requires the listings package: \usepackage{listings}
+% Optional but recommended for colour: \usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+
+\lstset{
+  language=Python,
+  basicstyle=\footnotesize\ttfamily,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=5,
+  numbersep=8pt,
+  tabsize=4,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  frame=single,
+  framerule=0.4pt,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+  captionpos=b,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{codegreen},
+  stringstyle=\color{codepurple},
+  numberstyle=\tiny\color{codegray},
+}
+
+\section*{Source Code}
+
+% Uncomment and modify the lines below to include your code files:
+
+% \subsection*{Problem 1: 2D Navier--Stokes Solver (\texttt{HW7.py})}
+% \lstinputlisting{HW7.py}

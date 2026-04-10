@@ -1,0 +1,165 @@
+\section*{Problem 1: 2D Navier--Stokes Solver for the Taylor--Green Vortex}
+
+In this assignment, you will extend your pressure projection solver to a full incompressible Navier--Stokes solver in two dimensions. You will simulate the decay of the \emph{Taylor--Green vortex}, a canonical benchmark for transitional and decaying turbulence.
+
+\subsection*{Governing Equations}
+
+We consider the two-dimensional Navier--Stokes equations in the incompressible limit and non-dimensional form:
+\begin{align}
+  \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} &= 0, \label{eq:continuity} \\
+  \frac{\partial u}{\partial t} + \frac{\partial uu}{\partial x} + \frac{\partial uv}{\partial y} &= -\frac{\partial p}{\partial x} + \frac{1}{\mathrm{Re}} \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right), \label{eq:umom} \\
+  \frac{\partial v}{\partial t} + \frac{\partial uv}{\partial x} + \frac{\partial vv}{\partial y} &= -\frac{\partial p}{\partial y} + \frac{1}{\mathrm{Re}} \left( \frac{\partial^2 v}{\partial x^2} + \frac{\partial^2 v}{\partial y^2} \right), \label{eq:vmom}
+\end{align}
+where $\mathrm{Re}$ is the Reynolds number.
+
+\subsection*{Domain and Grid}
+
+\begin{itemize}
+  \item Domain: $[0, 2\pi]^2$
+  \item Uniform (staggered) grid: $64 \times 64$
+  \item Periodic boundary conditions in all directions
+\end{itemize}
+
+\subsection*{Initial Condition (Taylor--Green Vortex)}
+
+\begin{align}
+  u(x,y; t=0) &= \sin(x)\cos(y), \label{eq:ic_u} \\
+  v(x,y; t=0) &= -\cos(x)\sin(y). \label{eq:ic_v}
+\end{align}
+
+\subsection*{Numerical Method}
+
+Use a \emph{fractional step (projection) method} with second-order spatial discretization and Crank--Nicolson time integration for viscous terms. Use the Thomas algorithm for solving the viscous terms implicitly (tridiagonal solver in $x$- and $y$-directions using ADI splitting). Use the Sherman--Morrison correction for periodic boundary conditions. Use multigrid for the pressure Poisson equation.
+
+\subsubsection*{Staggered Variable Arrangement}
+
+For cell $(i,j)$, store velocity $u$ at the barycenter of the left face ($u_{i-\frac{1}{2},j}$), $v$ at the barycenter of the bottom face ($v_{i,j-\frac{1}{2}}$), and pressure $p$ at the cell center ($p_{i,j}$). The solenoidal constraint is discretized as:
+\begin{equation}
+  \nabla \cdot \mathbf{u}\big|_{i,j} \approx \frac{u_{i+\frac{1}{2},j} - u_{i-\frac{1}{2},j}}{\Delta x} + \frac{v_{i,j+\frac{1}{2}} - v_{i,j-\frac{1}{2}}}{\Delta y}. \label{eq:div}
+\end{equation}
+
+\subsubsection*{Spatial Discretization (u-momentum)}
+
+Convective term in $x$:
+\begin{equation}
+  \left.\frac{\partial uu}{\partial x}\right|_{i-\frac{1}{2},j} \approx \frac{u_{i,j}^2 - u_{i-1,j}^2}{\Delta x} \label{eq:conv_x}
+\end{equation}
+
+Convective term in $y$:
+\begin{equation}
+  \left.\frac{\partial uv}{\partial y}\right|_{i-\frac{1}{2},j} \approx \frac{u_{i-\frac{1}{2},j+\frac{1}{2}} v_{i-\frac{1}{2},j+\frac{1}{2}} - u_{i-\frac{1}{2},j-\frac{1}{2}} v_{i-\frac{1}{2},j-\frac{1}{2}}}{\Delta y} \label{eq:conv_y}
+\end{equation}
+
+Viscous term in $x$:
+\begin{equation}
+  \left.\frac{\partial^2 u}{\partial x^2}\right|_{i-\frac{1}{2},j} \approx \frac{u_{i+\frac{1}{2},j} - 2u_{i-\frac{1}{2},j} + u_{i-\frac{3}{2},j}}{\Delta x^2} \label{eq:visc_x}
+\end{equation}
+
+Viscous term in $y$:
+\begin{equation}
+  \left.\frac{\partial^2 u}{\partial y^2}\right|_{i-\frac{1}{2},j} \approx \frac{u_{i-\frac{1}{2},j+1} - 2u_{i-\frac{1}{2},j} + u_{i-\frac{1}{2},j-1}}{\Delta y^2} \label{eq:visc_y}
+\end{equation}
+
+Pressure term in $x$:
+\begin{equation}
+  \left.\frac{\partial p}{\partial x}\right|_{i-\frac{1}{2},j} \approx \frac{p_{i,j} - p_{i-1,j}}{\Delta x} \label{eq:pres_x}
+\end{equation}
+
+Additional interpolations:
+\begin{align}
+  u_{i,j} &= \frac{1}{2}\left(u_{i-\frac{1}{2},j} + u_{i+\frac{1}{2},j}\right), \label{eq:u_interp} \\
+  u_{i-\frac{1}{2},j-\frac{1}{2}} &= \frac{1}{2}\left(u_{i-\frac{1}{2},j} + u_{i-\frac{1}{2},j-1}\right), \label{eq:u_half_interp} \\
+  v_{i-\frac{1}{2},j-\frac{1}{2}} &= \frac{1}{2}\left(v_{i,j-\frac{1}{2}} + v_{i-1,j-\frac{1}{2}}\right). \label{eq:v_half_interp}
+\end{align}
+
+\textbf{Observations:}
+\begin{enumerate}
+  \item All approximations are centered in space and formally second-order accurate.
+  \item When coding, use $u(i,j) = u_{i-\frac{1}{2},j}$, $v(i,j) = v_{i,j-\frac{1}{2}}$, and $p(i,j) = p_{i,j}$.
+  \item The $v$-momentum equation can be obtained readily from the proposed discretization of the $u$-momentum equation.
+\end{enumerate}
+
+\subsubsection*{Temporal Discretization -- Fractional Step Method}
+
+Following Kim and Moin (1985), the method combines Adams--Bashforth for convective terms with Crank--Nicolson for viscous terms, and a projection step for pressure coupling.
+
+\textbf{Step 1.} Advance momentum without pressure. Let $H$ denote the convective term:
+\begin{equation}
+  \frac{\mathbf{u}^\star_{i,j} - \mathbf{u}^n_{i,j}}{\Delta t} = \frac{3}{2}H^n_{i,j} - \frac{1}{2}H^{n-1}_{i,j} + \frac{1}{2\,\mathrm{Re}}\left(\frac{\delta^2}{\delta x^2} + \frac{\delta^2}{\delta y^2}\right)\left(\mathbf{u}^\star_{i,j} + \mathbf{u}^n_{i,j}\right). \label{eq:step1}
+\end{equation}
+
+Using approximate factorization (ADI splitting), this becomes two tridiagonal solves:
+\begin{align}
+  \left(1 - \frac{\Delta t}{2}\frac{1}{\mathrm{Re}}\frac{\delta^2}{\delta x^2}\right)\Delta \mathbf{u}^{\star\star}_{i,j} &= \frac{\Delta t}{2}\left(3H^n_{i,j} - H^{n-1}_{i,j}\right) + \frac{\Delta t}{\mathrm{Re}}\left(\frac{\delta^2}{\delta x^2} + \frac{\delta^2}{\delta y^2}\right)\mathbf{u}^n_{i,j}, \label{eq:adi_x} \\
+  \left(1 - \frac{\Delta t}{2}\frac{1}{\mathrm{Re}}\frac{\delta^2}{\delta y^2}\right)\Delta \mathbf{u}^\star_{i,j} &= \Delta \mathbf{u}^{\star\star}_{i,j}, \label{eq:adi_y}
+\end{align}
+followed by the velocity update $\mathbf{u}^\star_{i,j} = \mathbf{u}^n_{i,j} + \Delta \mathbf{u}^\star_{i,j}$.
+
+\textbf{Step 2.} Solve the pressure Poisson equation:
+\begin{equation}
+  \nabla \cdot \left(\nabla p^{n+1}\right)_{i,j} = \frac{1}{\Delta t}\nabla \cdot \mathbf{u}^\star\big|_{i,j}. \label{eq:ppe}
+\end{equation}
+
+\emph{Crucial observation:} The Laplacian in the pressure Poisson equation must be discretized exactly using the gradient and divergence operators from Steps 2 and 3.
+
+\textbf{Step 3.} Correct the velocity:
+\begin{equation}
+  \mathbf{u}^{n+1}_{i,j} = \mathbf{u}^\star_{i,j} - \Delta t\,\nabla p^{n+1}\big|_{i,j}. \label{eq:correction}
+\end{equation}
+
+\subsubsection*{Time Stepping}
+
+Choose $\Delta t$ such that:
+\[
+  \mathrm{CFL} = \frac{u_{\max}\Delta t}{\Delta x} \lesssim 0.5
+\]
+Simulate until $t = 10$.
+
+\subsection*{Questions}
+
+\subsubsection*{(a) Numerical Method Description}
+
+% TODO: Provide a brief description of your numerical method, including:
+% - Discretization of convective and diffusive terms
+% - Structure of the Helmholtz solver
+% - Linear solvers used
+
+\textbf{Solution:}
+
+
+\subsubsection*{(b) Incompressibility Verification}
+
+% TODO: Plot either the max or L2 norm of divergence vs time
+
+\textbf{Solution:}
+
+
+\subsubsection*{(c) Kinetic Energy}
+
+% TODO: Compute and plot kinetic energy E(t) = 1/2 int |u|^2 dV
+% Compare with expected decay behavior (analytic solution from HW1)
+
+\textbf{Solution:}
+
+
+\subsubsection*{(d) Flow Visualization}
+
+% TODO: Contours or slices of velocity magnitude and pressure
+
+\textbf{Solution:}
+
+
+\subsubsection*{(e) Report}
+
+% TODO: Report the following:
+% - Time step size
+% - Solver tolerances and number of iterations
+% - Computational cost
+% - Compare velocity field to analytical solution for 2D Taylor-Green vortex (see HW 1)
+
+\textbf{Solution:}
+
+
+\subsubsection*{(f) Code}
+
+See attached source code in the appendix.
