@@ -1,0 +1,32 @@
+# Runtime configuration for PotentialFieldSolver
+# Lines starting with '#' are comments
+
+# Grid parameters
+point_count 162
+grid_type icosahedral   # uniform | icosahedral
+
+# Icosahedral grid: refinement levels (point count = 10*4^(levels-1) + 2)
+#   levels=3 -> 162 pts  |  levels=4 -> 642 pts  |  levels=5 -> 2562 pts
+icos_levels 5
+
+# To run the icosahedral pipeline instead, change "modules" to:
+#   modules icos_grid potential output
+
+# Initial conditions: dipole, tilted_dipole, shifted_dipole
+initial_conditions shifted_dipole
+
+# Integration method used by the potential module: direct_sum
+integration_method direct_sum
+
+# Solver parameters
+tolerance 1e-6
+max_iterations 1000
+
+# Pipeline modules to run (in order)
+# Available: grid, potential, gradient, output
+modules icos_grid initial_conds potential output
+
+# Output
+write_output true
+output_file resultss.csv
+ 
