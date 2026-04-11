@@ -1,8 +1,8 @@
 #include "structs.hpp"
-#include "modules/grid_module.hpp"
-#include "modules/initial_conditions_module.hpp"
-#include "modules/solver_module.hpp"
-#include "modules/output_module.hpp"
+#include "grid.hpp"
+#include "initial_conditions.hpp"
+#include "solver.hpp"
+#include "output.hpp"
 
 int main() {
     RunConfig cfg;

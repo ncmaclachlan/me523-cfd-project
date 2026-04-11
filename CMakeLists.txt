@@ -1,0 +1,52 @@
+cmake_minimum_required(VERSION 3.16)
+project(NavierStokes2D VERSION 1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
+
+# ---------------------------------------------------------------------------
+# Spack integration
+# Activate a spack environment before configuring so that find_package calls
+# below resolve against spack-installed packages automatically:
+#
+#   spack env activate spack/ncam          (ncam local machine)
+#   spack env activate spack/hmorenom      (hmorenom local machine)
+#   spack env activate spack/greatlakes    (UMich Great Lakes HPC)
+#
+# Spack sets CMAKE_PREFIX_PATH on activation — no manual path config needed.
+# Then configure and build as normal:
+#
+#   cmake -B build -DCMAKE_BUILD_TYPE=Release
+#   cmake --build build -j$(nproc)
+# ---------------------------------------------------------------------------
+
+# Optional: MPI — resolved from spack env when openmpi is installed
+find_package(MPI COMPONENTS CXX)
+
+# Optional: OpenMP — enabled via +openmp in kokkos/trilinos spack variants
+find_package(OpenMP COMPONENTS CXX)
+
+# Required: Kokkos — activate a spack environment before configuring
+find_package(Kokkos REQUIRED)
+
+# Required: Trilinos — activate a spack environment before configuring
+find_package(Trilinos REQUIRED)
+
+# config.h written to build directory, include it via target_include_directories
+configure_file(config.h.in ${CMAKE_BINARY_DIR}/config.h)
+
+add_subdirectory(src)
+add_subdirectory(apps)
+add_subdirectory(tests)
+
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+  add_subdirectory(docs)
+endif()

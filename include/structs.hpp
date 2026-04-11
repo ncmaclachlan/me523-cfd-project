@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <vector>
+#include <Kokkos_Core.hpp>
 
 struct RunConfig {
     int    nx = 64;
@@ -16,17 +16,17 @@ struct RunConfig {
 
 struct SimState {
     // Grid coordinates (size nx*ny, row-major)
-    std::vector<double> x;
-    std::vector<double> y;
+    Kokkos::View<double*> x;
+    Kokkos::View<double*> y;
     double dx = 0.0;
     double dy = 0.0;
 
     // Velocity components
-    std::vector<double> u;
-    std::vector<double> v;
+    Kokkos::View<double*> u;
+    Kokkos::View<double*> v;
 
     // Pressure
-    std::vector<double> p;
+    Kokkos::View<double*> p;
 
     // Grid dimensions (copied from config for convenience)
     int nx = 0;

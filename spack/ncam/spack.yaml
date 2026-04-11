@@ -1,0 +1,27 @@
+spack:
+  specs:
+  - openmpi +cuda fabrics=ucx
+  - kokkos +openmp +cuda +cuda_lambda +serial cuda_arch=120
+  - kokkos-kernels +openmp +cuda +blas +lapack +cublas +cusparse +cusolver +execspace_cuda +execspace_serial +serial cuda_arch=120
+  - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan2 ~aztec ~epetra cuda_arch=120
+  - superlu-dist +openmp +parmetis
+  - parmetis +shared
+  - cmake
+  - ninja
+  - doxygen
+
+  packages:
+    nvhpc:
+      externals: []
+    cuda:
+      externals:
+      - spec: cuda@13.0.88
+        prefix: /usr/local/cuda-13.0
+      buildable: false
+    all:
+      require: '%gcc@14.2.0'
+      variants: cuda_arch=120
+
+    mpi:
+      require:
+      - openmpi

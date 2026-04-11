@@ -1,7 +1,7 @@
 #pragma once
-#include "modules/base_module.hpp"
+#include "base_module.hpp"
 
-class SolverModule : public SimModule {
+class InitialConditionsModule : public SimModule {
 public:
     void execute(const RunConfig& cfg, SimState& state) override;
 };

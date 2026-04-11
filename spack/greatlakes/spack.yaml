@@ -1,0 +1,57 @@
+spack:
+  specs:
+  # Great Lakes uses OpenMPI via the module system; ucx is available on most nodes.
+  # GPU nodes have A100s (cuda_arch=80) and V100s (cuda_arch=70) — confirm your
+  # allocation's node type before setting cuda_arch below.
+  # If running on CPU-only nodes, drop +cuda: openmpi fabrics=ucx
+  - openmpi +cuda fabrics=ucx
+
+  # CHANGE: set cuda_arch to match your allocated GPU:
+  #   80 = Ampere (A100) — standard GPU partition on Great Lakes
+  #   70 = Volta (V100)  — older GPU nodes
+  # If CPU-only, replace the three lines below with:
+  #   - kokkos +openmp +serial ~cuda
+  #   - kokkos-kernels +openmp +blas +lapack +execspace_serial +serial ~cuda
+  - kokkos +openmp +cuda +cuda_lambda +serial cuda_arch=80
+  - kokkos-kernels +openmp +cuda +blas +lapack +cublas +cusparse +cusolver +execspace_cuda +execspace_serial +serial cuda_arch=80
+
+  # CHANGE: update cuda_arch to match above; drop +cuda and cuda_arch if CPU-only:
+  #   - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +amesos2 +zoltan2 ~aztec ~epetra ~cuda
+  - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan2 ~aztec ~epetra cuda_arch=80
+
+  - superlu-dist +openmp +parmetis
+  - parmetis +shared
+  - cmake
+  - ninja
+  - doxygen
+
+  packages:
+    nvhpc:
+      externals: []
+
+    # CHANGE: Great Lakes provides CUDA as a module. Load it and check the version
+    # with 'nvcc --version', then update spec and prefix accordingly.
+    # Typical paths: /sw/arcts/centos7/cuda/<version> or /sw/pkgs/arc/cuda/<version>
+    # Check available versions with: module spider cuda
+    # If running CPU-only, remove this entire 'cuda:' block.
+    cuda:
+      externals:
+      - spec: cuda@13.0.88
+        prefix: /usr/local/cuda-13.0
+      buildable: false
+
+    all:
+      # CHANGE: gcc@14.2.0 was required on ncam — gcc@13.x failed to install some
+      # packages in this environment. Ensure the full gcc-14 suite including
+      # gfortran-14 is available, then run 'spack compiler find' to register it.
+      # On Great Lakes check available gcc versions with: module spider gcc
+      require: '%gcc@14.2.0'
+      # CHANGE: must match cuda_arch in specs above; remove this line if CPU-only
+      variants: cuda_arch=80
+
+    mpi:
+      require:
+      # Great Lakes provides OpenMPI via modules; this should not need to change
+      # unless you switch to a cray-mpich or intel-mpi based allocation.
+      # Check with: module avail mpi
+      - openmpi
