@@ -1,56 +1,36 @@
 spack:
   specs:
-  # CHANGE: verify ucx is available; some systems use psm2 or none (drop fabrics=ucx if absent).
-  # If no CUDA on this machine, drop +cuda entirely: openmpi
-  - openmpi +cuda fabrics=ucx
+  # macOS (Apple Silicon M4 Pro) — serial Kokkos + MPI for multi-core parallelism
+  # Apple Clang lacks OpenMP; Trilinos lacks Threads ETI support.
+  # Use `mpirun -np N ./ns_solver` for parallel runs on all 14 cores.
+  - openmpi
 
-  # CHANGE: set cuda_arch to match your GPU. Common values:
-  #   120 = Blackwell (H200, RTX 5090)
-  #    90 = Hopper (H100)
-  #    89 = Ada Lovelace (RTX 4090/4080)
-  #    86 = Ampere consumer (RTX 3090/3080)
-  #    80 = Ampere datacenter (A100)
-  #    70 = Volta (V100)
-  # If no CUDA, replace the three lines below with CPU-only variants:
-  #   - kokkos +openmp +serial ~cuda
-  #   - kokkos-kernels +openmp +blas +lapack +execspace_serial +serial ~cuda
-  - kokkos +openmp +cuda +cuda_lambda +serial cuda_arch=120
-  - kokkos-kernels +openmp +cuda +blas +lapack +cublas +cusparse +cusolver +execspace_cuda +execspace_serial +serial cuda_arch=120
+  # Serial Kokkos — MPI handles parallelism on this machine
+  - kokkos ~openmp +serial ~threads ~cuda
 
-  # CHANGE: if no CUDA, drop +cuda and cuda_arch from trilinos:
-  #   - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +amesos2 +zoltan2 ~aztec ~epetra ~cuda
-  - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan2 ~aztec ~epetra cuda_arch=120
+  # Serial Kokkos Kernels
+  - kokkos-kernels ~openmp +blas +lapack +execspace_serial +serial ~cuda
 
-  - superlu-dist +openmp +parmetis
+  # Trilinos with serial Kokkos + MPI (16.0.0 fixes kokkos-kernels spadd_handle bug)
+  - trilinos@16.0.0 +kokkos +tpetra +belos +muelu +ifpack2 +mpi ~openmp +amesos2 +zoltan2 ~aztec ~epetra ~cuda
+
+  - superlu-dist ~openmp +parmetis
   - parmetis +shared
   - cmake
   - ninja
   - doxygen
 
   packages:
-    nvhpc:
-      externals: []
-
-    # CHANGE: if no CUDA on this machine, remove this entire 'cuda:' block.
-    # If CUDA is present, update spec version and prefix to match the local install.
-    # Run 'nvcc --version' and check /usr/local/ for the cuda directory name.
-    cuda:
-      externals:
-      - spec: cuda@13.0.88
-        prefix: /usr/local/cuda-13.0
-      buildable: false
-
     all:
-      # CHANGE: gcc@14.2.0 was required on ncam — gcc@13.x failed to install some
-      # packages in this environment. Ensure the full gcc-14 suite is installed
-      # including gfortran-14, then run 'spack compiler find' to register it.
-      require: '%gcc@14.2.0'
-      # CHANGE: must match cuda_arch in specs above; remove this line if no CUDA
-      variants: cuda_arch=120
+      # Apple Clang for everything — no OpenMP, no Fortran headaches for most packages
+      require: '%apple-clang@17.0.0'
 
-    mpi:
-      require:
-      # CHANGE: if the system uses mpich or cray-mpich instead of openmpi,
-      # update both this line and the openmpi spec above.
-      # Check with: module avail mpi
-      - openmpi
+    # Packages that need Fortran get GCC for that language only (Spack handles the split)
+    superlu-dist:
+      require: '%apple-clang@17.0.0 %fortran=gcc@15.2.0'
+    trilinos:
+      require: '%apple-clang@17.0.0 %fortran=gcc@15.2.0'
+    openmpi:
+      require: '%apple-clang@17.0.0 %fortran=gcc@15.2.0'
+    openblas:
+      require: '%apple-clang@17.0.0 %fortran=gcc@15.2.0'

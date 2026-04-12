@@ -52,15 +52,21 @@ ENV_PATH="${PROJECT_ROOT}/spack/${ENV_NAME}"
 
 # --- activate and build -----------------------------------------------------
 echo "Found installed environment: ${ENV_NAME}"
-spack env activate "${ENV_PATH}"
+
+# Use 'spack -e' to query the environment without requiring shell support.
+# Set CMAKE_PREFIX_PATH so CMake finds spack-installed packages.
+CMAKE_PREFIX_PATH="$(spack -e "${ENV_PATH}" find --format '{prefix}' | tr '\n' ':')"
+export CMAKE_PREFIX_PATH
 
 BUILD_DIR="${PROJECT_ROOT}/build"
 
 echo "Configuring (${BUILD_TYPE})..."
 cmake -B "${BUILD_DIR}" \
-      -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+      -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+      -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
 
 echo "Building..."
-cmake --build "${BUILD_DIR}" -j"$(nproc)"
+NPROC=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+cmake --build "${BUILD_DIR}" -j"${NPROC}"
 
 echo "Done. Binary: ${BUILD_DIR}/apps/ns_solver"

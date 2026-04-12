@@ -45,13 +45,12 @@ if ! command -v spack &>/dev/null; then
     exit 1
 fi
 
-echo "Activating spack environment: ${ENV_NAME}"
-spack env activate "${ENV_PATH}"
+echo "Using spack environment: ${ENV_NAME}"
 
 echo "Concretizing..."
-spack concretize
+spack -e "${ENV_PATH}" concretize
 
 echo "Installing (this may take a while)..."
-spack install
+spack -e "${ENV_PATH}" install
 
 echo "Done. Run ./scripts/build_with_spack.sh to build the project."
