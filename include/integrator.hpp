@@ -3,7 +3,10 @@
 #include "physics.hpp"
 
 struct ForwardEuler {
-    void predict(SimState& s, double re, double dt) const {
+    void predict(const SimState& s,
+                 Kokkos::View<double**> u_star,
+                 Kokkos::View<double**> v_star,
+                 double re, double dt) const {
         // TODO: u_star = u + dt * RHS_u(u, v)
         //       v_star = v + dt * RHS_v(u, v)
         // 1. compute momentum RHS into temporary views
@@ -13,7 +16,17 @@ struct ForwardEuler {
 };
 
 struct RK2 {
-    void predict(SimState& s, double re, double dt) const {
+    // Internal scratch for the intermediate stage — allocated on first use
+    mutable Kokkos::View<double**> u_tilde, v_tilde;
+
+    void predict(const SimState& s,
+                 Kokkos::View<double**> u_star,
+                 Kokkos::View<double**> v_star,
+                 double re, double dt) const {
+        if (u_tilde.extent(0) == 0) {
+            u_tilde = Kokkos::View<double**>("u_tilde", s.grid.u_nx(), s.grid.u_ny());
+            v_tilde = Kokkos::View<double**>("v_tilde", s.grid.v_nx(), s.grid.v_ny());
+        }
         // TODO: Heun's method (predictor-corrector)
         // 1. k1_u = RHS_u(u, v);             k1_v = RHS_v(u, v)
         // 2. u_tilde = u + dt*k1_u;          v_tilde = v + dt*k1_v
