@@ -44,6 +44,7 @@ configure_file(config.h.in ${CMAKE_BINARY_DIR}/config.h)
 
 add_subdirectory(src)
 add_subdirectory(apps)
+enable_testing()
 add_subdirectory(tests)
 
 find_package(Doxygen QUIET)
