@@ -25,9 +25,9 @@ struct Solver {
           state(MacGrid2D(cfg)),
           bc(std::move(bc_)),
           integrator(std::move(integ)),
-          u_star("u_star", state.grid.u_nx(), state.grid.u_ny()),
-          v_star("v_star", state.grid.v_nx(), state.grid.v_ny()),
-          rhs   ("rhs",    state.grid.p_nx(), state.grid.p_ny())
+          u_star("u_star", state.grid.u_nx_total(), state.grid.u_ny_total()),
+          v_star("v_star", state.grid.v_nx_total(), state.grid.v_ny_total()),
+          rhs   ("rhs",    state.grid.p_nx_total(), state.grid.p_ny_total())
     {
         ZeroIC{}.apply(state);
     }

@@ -12,7 +12,7 @@ struct SimState {
 
     explicit SimState(const MacGrid2D& g)
         : grid(g),
-          u("u", g.u_nx(), g.u_ny()),
-          v("v", g.v_nx(), g.v_ny()),
-          p("p", g.p_nx(), g.p_ny()) {}
+          u("u", g.u_nx_total(), g.u_ny_total()),
+          v("v", g.v_nx_total(), g.v_ny_total()),
+          p("p", g.p_nx_total(), g.p_ny_total()) {}
 };

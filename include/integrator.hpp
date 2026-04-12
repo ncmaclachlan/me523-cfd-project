@@ -24,8 +24,8 @@ struct RK2 {
                  Kokkos::View<double**> v_star,
                  double re, double dt) const {
         if (u_tilde.extent(0) == 0) {
-            u_tilde = Kokkos::View<double**>("u_tilde", s.grid.u_nx(), s.grid.u_ny());
-            v_tilde = Kokkos::View<double**>("v_tilde", s.grid.v_nx(), s.grid.v_ny());
+            u_tilde = Kokkos::View<double**>("u_tilde", s.grid.u_nx_total(), s.grid.u_ny_total());
+            v_tilde = Kokkos::View<double**>("v_tilde", s.grid.v_nx_total(), s.grid.v_ny_total());
         }
         // TODO: Heun's method (predictor-corrector)
         // 1. k1_u = RHS_u(u, v);             k1_v = RHS_v(u, v)
