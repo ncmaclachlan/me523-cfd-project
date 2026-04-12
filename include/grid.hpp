@@ -7,6 +7,7 @@ struct MacGrid2D {
     int    nx = 0, ny = 0;
     double lx = 0.0, ly = 0.0;
     double dx = 0.0, dy = 0.0;
+    static constexpr int ng = 1;
 
     MacGrid2D() = default;
 
@@ -25,15 +26,33 @@ struct MacGrid2D {
 
     KOKKOS_INLINE_FUNCTION int dim() const { return 2; }
 
-    // Cell-centred pressure: nx x ny
-    KOKKOS_INLINE_FUNCTION int p_nx() const { return nx; }
-    KOKKOS_INLINE_FUNCTION int p_ny() const { return ny; }
+    // Cell-centred pressure: owned nx x ny, allocated (nx+2ng) x (ny+2ng)
+    KOKKOS_INLINE_FUNCTION int p_nx_owned() const { return nx; }
+    KOKKOS_INLINE_FUNCTION int p_ny_owned() const { return ny; }
+    KOKKOS_INLINE_FUNCTION int p_nx_total() const { return nx + 2*ng; }
+    KOKKOS_INLINE_FUNCTION int p_ny_total() const { return ny + 2*ng; }
+    KOKKOS_INLINE_FUNCTION int p_i_begin()  const { return ng; }
+    KOKKOS_INLINE_FUNCTION int p_i_end()    const { return ng + nx; }
+    KOKKOS_INLINE_FUNCTION int p_j_begin()  const { return ng; }
+    KOKKOS_INLINE_FUNCTION int p_j_end()    const { return ng + ny; }
 
-    // Face-centred u: (nx+1) x ny
-    KOKKOS_INLINE_FUNCTION int u_nx() const { return nx + 1; }
-    KOKKOS_INLINE_FUNCTION int u_ny() const { return ny; }
+    // Face-centred u: owned (nx+1) x ny, allocated (nx+1+2ng) x (ny+2ng)
+    KOKKOS_INLINE_FUNCTION int u_nx_owned() const { return nx + 1; }
+    KOKKOS_INLINE_FUNCTION int u_ny_owned() const { return ny; }
+    KOKKOS_INLINE_FUNCTION int u_nx_total() const { return nx + 1 + 2*ng; }
+    KOKKOS_INLINE_FUNCTION int u_ny_total() const { return ny + 2*ng; }
+    KOKKOS_INLINE_FUNCTION int u_i_begin()  const { return ng; }
+    KOKKOS_INLINE_FUNCTION int u_i_end()    const { return ng + nx + 1; }
+    KOKKOS_INLINE_FUNCTION int u_j_begin()  const { return ng; }
+    KOKKOS_INLINE_FUNCTION int u_j_end()    const { return ng + ny; }
 
-    // Face-centred v: nx x (ny+1)
-    KOKKOS_INLINE_FUNCTION int v_nx() const { return nx; }
-    KOKKOS_INLINE_FUNCTION int v_ny() const { return ny + 1; }
+    // Face-centred v: owned nx x (ny+1), allocated (nx+2ng) x (ny+1+2ng)
+    KOKKOS_INLINE_FUNCTION int v_nx_owned() const { return nx; }
+    KOKKOS_INLINE_FUNCTION int v_ny_owned() const { return ny + 1; }
+    KOKKOS_INLINE_FUNCTION int v_nx_total() const { return nx + 2*ng; }
+    KOKKOS_INLINE_FUNCTION int v_ny_total() const { return ny + 1 + 2*ng; }
+    KOKKOS_INLINE_FUNCTION int v_i_begin()  const { return ng; }
+    KOKKOS_INLINE_FUNCTION int v_i_end()    const { return ng + nx; }
+    KOKKOS_INLINE_FUNCTION int v_j_begin()  const { return ng; }
+    KOKKOS_INLINE_FUNCTION int v_j_end()    const { return ng + ny + 1; }
 };
