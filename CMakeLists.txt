@@ -12,6 +12,15 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
 
+# Prevent conda/miniconda lib dirs from being added to RPATH — they contain
+# an incompatible OpenMPI that shadows the spack-installed one at runtime.
+if(DEFINED ENV{CONDA_PREFIX})
+  list(APPEND CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+  set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
+  list(FILTER CMAKE_BUILD_RPATH EXCLUDE REGEX "miniconda|anaconda|conda")
+endif()
+list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "miniconda|anaconda|conda")
+
 # ---------------------------------------------------------------------------
 # Spack integration
 # Activate a spack environment before configuring so that find_package calls
