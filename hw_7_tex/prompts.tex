@@ -3,17 +3,14 @@
 
 \section*{AI Use Documentation}
 
-% When you use Claude or other AI tools, document each interaction below.
-% Use the following format:
+\subsection*{Interaction 1}
 
-% \subsection*{Interaction 1}
-%
-% \textbf{Prompt:}
-% \begin{quote}
-% [Your prompt text here]
-% \end{quote}
-%
-% \textbf{Response summary:}
-% [Brief description of what Claude generated or modified]
-%
-% \textbf{Date and Model:} [e.g., Claude Opus 4.6, 2026-04-01]
+\textbf{Prompt:}
+\begin{quote}
+Set up the C++ project structure for a 2D incompressible Navier-Stokes solver using Kokkos and Trilinos. Use the Chorin projection method on a staggered MAC grid. Organize as a hybrid library with header-only templated code and compiled source files for non-templated components (pressure solver, CSV output, physics kernels). Include Spack-based dependency management, CMake build system, and Doxygen documentation.
+\end{quote}
+
+\textbf{Response summary:}
+Claude scaffolded the full project: \texttt{include/} headers for the solver pipeline (grid, boundary conditions, initial conditions, integrators, physics, pressure solver, output, and a templated \texttt{Solver<BC, Integrator>}), compiled \texttt{src/} sources for \texttt{PressureSolver}, \texttt{CSVOutput}, and \texttt{physics::} functions, Spack environment definitions for multiple machines, CMake build files, GitHub Actions CI for Doxygen deployment, and the main driver in \texttt{apps/ns\_solver.cpp}. Function stubs with TODOs were left for the actual numerical implementations.
+
+\textbf{Date and Model:} Claude Opus 4.6, 2026-04-12

@@ -94,3 +94,27 @@ GitHub Actions workflow (`.github/workflows/docs.yml`) auto-deploys Doxygen docs
 ## Compile Definitions
 
 `USE_MPI` and `USE_OPENMP` are conditionally defined based on whether MPI and OpenMP are found at configure time. Check for these with `#ifdef` in source files.
+
+## AI Use Documentation
+
+All AI-assisted interactions for this project must be documented in `hw_7_tex/prompts.tex`. This is **required by ME 523 course policy**.
+
+### How to document interactions
+
+When Claude is used during development, append a new interaction to `prompts.tex` following this format:
+
+```latex
+\subsection*{Interaction N}
+
+\textbf{Prompt:}
+\begin{quote}
+[Your prompt text here]
+\end{quote}
+
+\textbf{Response summary:}
+[Brief description of what Claude generated or modified]
+
+\textbf{Date and Model:} [e.g., Claude Opus 4.6, 2026-04-12]
+```
+
+When asked to do work on this project, Claude should proactively offer to document the interaction in `prompts.tex` after completing the task.
