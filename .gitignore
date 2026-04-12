@@ -10,6 +10,9 @@ docs/latex/
 *.swp
 *.swo
 
+.cache/
+.vscode/
+
 # Spack generated files
 spack/*/spack.lock
 spack/*/.spack-env/

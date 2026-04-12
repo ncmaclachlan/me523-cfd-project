@@ -3,6 +3,7 @@ project(NavierStokes2D VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -44,6 +45,7 @@ configure_file(config.h.in ${CMAKE_BINARY_DIR}/config.h)
 
 add_subdirectory(src)
 add_subdirectory(apps)
+enable_testing()
 add_subdirectory(tests)
 
 find_package(Doxygen QUIET)
