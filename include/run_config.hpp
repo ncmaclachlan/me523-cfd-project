@@ -1,12 +1,13 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <cmath>
 
 struct RunConfig {
     int    nx = 64;
     int    ny = 64;
-    double lx = 1.0;
-    double ly = 1.0;
+    double lx = 2.0 * M_PI;
+    double ly = 2.0 * M_PI;
 
     double dt    = 1e-3;
     double t_end = 1.0;
