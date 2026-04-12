@@ -1,26 +1,35 @@
 #pragma once
+#include <Kokkos_Core.hpp>
+#include <stdexcept>
 
-#include <cstddef>
+struct MacGrid2D {
+    int    nx = 0, ny = 0;
+    double lx = 0.0, ly = 0.0;
+    double dx = 0.0, dy = 0.0;
 
-// Broad abstract grid interface.
-// This is intentionally small: it exposes only what should be common
-// to many grid types, including higher-dimensional ones.
-class Grid {
-public:
-    virtual ~Grid() = default;
+    MacGrid2D() = default;
 
-    // Spatial dimension of the grid, e.g. 2 for a 2D grid.
-    virtual std::size_t dim() const = 0;
+    MacGrid2D(int nx, int ny, double lx, double ly)
+        : nx(nx), ny(ny), lx(lx), ly(ly),
+          dx(lx / nx), dy(ly / ny)
+    {
+        if (nx  <= 0)   throw std::invalid_argument("MacGrid2D: nx must be positive");
+        if (ny  <= 0)   throw std::invalid_argument("MacGrid2D: ny must be positive");
+        if (lx <= 0.0)  throw std::invalid_argument("MacGrid2D: lx must be positive");
+        if (ly <= 0.0)  throw std::invalid_argument("MacGrid2D: ly must be positive");
+    }
 
-    // Number of cells along a given axis.
-    // axis = 0 -> x, axis = 1 -> y, axis = 2 -> z, etc.
-    virtual int cells(std::size_t axis) const = 0;
+    KOKKOS_INLINE_FUNCTION int dim() const { return 2; }
 
-    // Physical domain length along a given axis.
-    // axis = 0 -> Lx, axis = 1 -> Ly, axis = 2 -> Lz, etc.
-    virtual double domain_length(std::size_t axis) const = 0;
+    // Cell-centred pressure: nx x ny
+    KOKKOS_INLINE_FUNCTION int p_nx() const { return nx; }
+    KOKKOS_INLINE_FUNCTION int p_ny() const { return ny; }
 
-    // Grid spacing along a given axis.
-    // axis = 0 -> dx, axis = 1 -> dy, axis = 2 -> dz, etc.
-    virtual double spacing(std::size_t axis) const = 0;
+    // Face-centred u: (nx+1) x ny
+    KOKKOS_INLINE_FUNCTION int u_nx() const { return nx + 1; }
+    KOKKOS_INLINE_FUNCTION int u_ny() const { return ny; }
+
+    // Face-centred v: nx x (ny+1)
+    KOKKOS_INLINE_FUNCTION int v_nx() const { return nx; }
+    KOKKOS_INLINE_FUNCTION int v_ny() const { return ny + 1; }
 };

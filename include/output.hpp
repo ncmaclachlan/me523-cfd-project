@@ -1,7 +1,14 @@
 #pragma once
-#include "base_module.hpp"
+#include "sim_state.hpp"
+#include <string>
 
-class OutputModule : public SimModule {
-public:
-    void execute(const RunConfig& cfg, SimState& state) override;
+struct CSVOutput {
+    std::string filename;
+
+    explicit CSVOutput(std::string fname) : filename(std::move(fname)) {}
+
+    template<typename P>
+    void write(const SimState<P>& s) const {
+        // TODO: write u, v, p fields to CSV
+    }
 };

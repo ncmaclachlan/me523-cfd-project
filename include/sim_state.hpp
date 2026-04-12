@@ -1,27 +1,24 @@
 #pragma once
 #include <Kokkos_Core.hpp>
-#include "grid.hpp"
 
-class SimState {
-public:
-    // builds SimState from a grid object
-    explicit SimState(const Grid& grid);
+template<typename Traits>
+struct SimState {
+    using Grid     = typename Traits::Grid;
+    using Scalar   = typename Traits::Scalar;
+    using MemSpace = typename Traits::ExecSpace::memory_space;
+    using View2D   = Kokkos::View<Scalar**, MemSpace>;
 
-    const Grid& grid() const { return grid_; }
-    // allows future adaptive mesh refinement, but for now do not allow grid
-    // modifications
-    // Grid& grid() { return grid_; }
+    Grid   grid;
+    View2D u, v, p;
+    View2D u_star, v_star;
+    Scalar time = Scalar(0);
+    int    step  = 0;
 
-    Kokkos::View<double**> u;
-    Kokkos::View<double**> v;
-    Kokkos::View<double**> p;
-
-    Kokkos::View<double**> u_star;
-    Kokkos::View<double**> v_star;
-
-    double time = 0.0;
-    int step = 0;
-
-private:
-    Grid grid_;
+    explicit SimState(Grid g)
+        : grid(g),
+          u     ("u",      g.u_nx(), g.u_ny()),
+          v     ("v",      g.v_nx(), g.v_ny()),
+          p     ("p",      g.p_nx(), g.p_ny()),
+          u_star("u_star", g.u_nx(), g.u_ny()),
+          v_star("v_star", g.v_nx(), g.v_ny()) {}
 };
