@@ -1,6 +1,7 @@
 #pragma once
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
+#include "run_config.hpp"
 
 struct MacGrid2D {
     int    nx = 0, ny = 0;
@@ -18,6 +19,9 @@ struct MacGrid2D {
         if (lx <= 0.0)  throw std::invalid_argument("MacGrid2D: lx must be positive");
         if (ly <= 0.0)  throw std::invalid_argument("MacGrid2D: ly must be positive");
     }
+
+    explicit MacGrid2D(const RunConfig& cfg)
+        : MacGrid2D(cfg.nx, cfg.ny, cfg.lx, cfg.ly) {}
 
     KOKKOS_INLINE_FUNCTION int dim() const { return 2; }
 

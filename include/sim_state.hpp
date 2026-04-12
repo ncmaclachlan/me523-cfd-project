@@ -1,24 +1,23 @@
 #pragma once
 #include <Kokkos_Core.hpp>
+#include "grid.hpp"
 
-template<typename Traits>
 struct SimState {
-    using Grid     = typename Traits::Grid;
-    using Scalar   = typename Traits::Scalar;
-    using MemSpace = typename Traits::ExecSpace::memory_space;
-    using View2D   = Kokkos::View<Scalar**, MemSpace>;
+    using View2D = Kokkos::View<double**>;
 
-    Grid   grid;
+    MacGrid2D grid;
     View2D u, v, p;
     View2D u_star, v_star;
-    Scalar time = Scalar(0);
-    int    step  = 0;
+    View2D rhs;        // pressure Poisson RHS
+    double time = 0.0;
+    int    step = 0;
 
-    explicit SimState(Grid g)
+    explicit SimState(const MacGrid2D& g)
         : grid(g),
           u     ("u",      g.u_nx(), g.u_ny()),
           v     ("v",      g.v_nx(), g.v_ny()),
           p     ("p",      g.p_nx(), g.p_ny()),
           u_star("u_star", g.u_nx(), g.u_ny()),
-          v_star("v_star", g.v_nx(), g.v_ny()) {}
+          v_star("v_star", g.v_nx(), g.v_ny()),
+          rhs   ("rhs",    g.p_nx(), g.p_ny()) {}
 };

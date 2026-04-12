@@ -7,8 +7,7 @@ struct CSVOutput {
 
     explicit CSVOutput(std::string fname) : filename(std::move(fname)) {}
 
-    template<typename P>
-    void write(const SimState<P>& s) const {
+    void write(const SimState& s) const {
         // TODO: write u, v, p fields to CSV
     }
 };

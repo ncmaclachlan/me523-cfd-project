@@ -1,27 +1,18 @@
 #include <Kokkos_Core.hpp>
-#include "problem_traits.hpp"
 #include "solver.hpp"
 
 int main(int argc, char* argv[]) {
     Kokkos::initialize(argc, argv);
     {
-        using Traits = HW7;
+        RunConfig cfg;
+        cfg.nx = 64;
+        cfg.ny = 64;
+        cfg.re = 100.0;
+        cfg.dt = 1e-3;
+        cfg.t_end = 1.0;
 
-        Solver<Traits> solver(
-            MacGrid2D(64, 64, 1.0, 1.0),
-            IncompressibleNS{100.0},
-            LidDrivenCavityBC{1.0}
-        );
-
-        const double dt    = 1e-3;
-        const double t_end = 1.0;
-        Traits::Output output("output.csv");
-
-        while (solver.state.time < t_end) {
-            solver.advance(dt);
-        }
-
-        output.write(solver.state);
+        Solver solver(cfg);
+        solver.run();
     }
     Kokkos::finalize();
     return 0;
