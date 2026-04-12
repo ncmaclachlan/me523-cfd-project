@@ -29,24 +29,24 @@ struct Solver {
           v_star("v_star", state.grid.v_nx_total(), state.grid.v_ny_total()),
           rhs   ("rhs",    state.grid.p_nx_total(), state.grid.p_ny_total())
     {
-        ZeroIC{}.apply(state);
+        TaylorGreenIC{}.apply(state);
     }
 
     void advance() {
         // 1. Apply boundary conditions
-        bc.apply(state);
+        //bc.apply(state);
 
         // 2. Predict velocity (writes into u_star, v_star)
-        integrator.predict(state, u_star, v_star, config.re, config.dt);
+        //integrator.predict(state, u_star, v_star, config.re, config.dt);
 
         // 3. Compute pressure Poisson RHS from divergence of u_star
-        physics::compute_pressure_rhs(state, u_star, v_star, config.dt, rhs);
+        //physics::compute_pressure_rhs(state, u_star, v_star, config.dt, rhs);
 
         // 4. Solve pressure Poisson equation (reads rhs, writes s.p)
-        pressure.solve(state, rhs);
+        //pressure.solve(state, rhs);
 
         // 5. Correct velocity with pressure gradient
-        physics::correct_velocity(state, u_star, v_star, config.dt);
+        //physics::correct_velocity(state, u_star, v_star, config.dt);
 
         state.time += config.dt;
         ++state.step;
