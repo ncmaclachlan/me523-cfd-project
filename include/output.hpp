@@ -1,5 +1,6 @@
 #pragma once
 #include "sim_state.hpp"
+#include "run_config.hpp"
 #include <string>
 
 struct CSVOutput {
