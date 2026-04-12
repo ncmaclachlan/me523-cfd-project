@@ -58,10 +58,10 @@ struct Solver {
         while (state.time < config.t_end) {
             advance();
 
-            if (config.output_interval > 0 &&
+            /* if (config.output_interval > 0 &&
                 state.step % config.output_interval == 0) {
                 output.write(state);
-            }
+            } */
         }
 
         output.write(state);
