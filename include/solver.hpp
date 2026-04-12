@@ -53,7 +53,7 @@ struct Solver {
     }
 
     void run() {
-        CSVOutput output(config.output_filename);
+        CSVOutput output(config.output_path());
 
         while (state.time < config.t_end) {
             advance();
