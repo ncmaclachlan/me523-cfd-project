@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-2D incompressible Navier-Stokes solver for ME 523 (Advanced Heat Transfer). Built with C++17, Kokkos for performance portability (CPU/GPU), and Trilinos for linear algebra. This is an active course project with skeleton modules that are being filled in.
+2D incompressible Navier-Stokes solver for ME 523 (Advanced Heat Transfer). Built with C++17, Kokkos for performance portability (CPU/GPU), and Trilinos for linear algebra. Uses the Chorin projection method on a staggered (MAC) grid. This is an active course project with skeleton stubs being filled in.
 
 ## Build Commands
 
@@ -29,26 +29,53 @@ Spack must be sourced (`source ~/spack/share/spack/setup-env.sh`) before running
 
 ## Architecture
 
-The solver uses a **module pipeline** pattern. Each stage of the simulation is a `SimModule` subclass that implements `execute(const RunConfig& cfg, SimState& state)`:
+Hybrid library: templated/Kokkos code is header-only in `include/`, while non-templated host-side components (`PressureSolver`, `CSVOutput`) are compiled from `src/`. The `ns2d` CMake target is a compiled `STATIC` library that links Kokkos, Trilinos, and optional MPI/OpenMP.
 
-1. `GridModule` — generates the computational mesh
-2. `InitialConditionsModule` — sets initial u, v, p fields
-3. `SolverModule` — time-steps the Navier-Stokes equations (main logic, currently a stub)
-4. `OutputModule` — writes results to file
+### Key data structures
 
-The main executable (`apps/ns_solver.cpp`) instantiates and runs these modules sequentially.
+- `RunConfig` (`include/run_config.hpp`) — simulation parameters: grid size, domain, dt, t_end, Re, output settings
+- `MacGrid2D` (`include/grid.hpp`) — staggered grid with cell-centered pressure and face-centered velocities. Constructible from `RunConfig`
+- `SimState` (`include/sim_state.hpp`) — all runtime data as `Kokkos::View<double**>` 2D views: `u`, `v`, `p`, `u_star`, `v_star`, `rhs`
 
-**Key data structures** (in `include/structs.hpp`):
-- `RunConfig` — simulation parameters (grid size, domain, dt, Re, etc.)
-- `SimState` — all runtime data as `Kokkos::View<double*>` arrays (1D, row-major for nx*ny grids)
+### Solver pipeline (Chorin projection method)
 
-**Library structure**: All module sources compile into a static library `ns2d` (defined in `src/CMakeLists.txt`). The executable and tests link against `ns2d`.
+`Solver` (`include/solver.hpp`) is templated on `<BC, Integrator>` with defaults `<LidDrivenCavityBC, ForwardEuler>`. Each time step in `Solver::advance()` runs:
 
-## Adding New Modules
+1. **BC application** — `bc.apply(state)` sets wall/lid boundary conditions
+2. **Velocity prediction** — `integrator.predict(state, re, dt)` computes `u_star`, `v_star` from momentum equations (calls `physics::compute_u_rhs`, `physics::compute_v_rhs`)
+3. **Pressure Poisson RHS** — `physics::compute_pressure_rhs(state, dt, rhs)` computes divergence of predicted velocity
+4. **Pressure solve** — `pressure.solve(state)` solves Laplacian(p) = rhs via Trilinos
+5. **Velocity correction** — `physics::correct_velocity(state, dt)` subtracts pressure gradient from predicted velocity
 
-1. Create header in `include/` inheriting from `SimModule`
-2. Implement in `src/` and add the `.cpp` to `src/CMakeLists.txt`
-3. Instantiate and call in `apps/ns_solver.cpp` at the appropriate pipeline stage
+`Solver::run()` drives the time loop and writes output at intervals via `CSVOutput`.
+
+### Header inventory
+
+| Header | Purpose |
+|---|---|
+| `run_config.hpp` | Parameter struct (nx, ny, lx, ly, dt, t_end, re, output settings) |
+| `grid.hpp` | `MacGrid2D` — staggered grid geometry and index helpers |
+| `sim_state.hpp` | `SimState` — Kokkos 2D views for all field variables |
+| `boundary_conditions.hpp` | `LidDrivenCavityBC`, `PeriodicBC` — wall/lid/periodic BCs |
+| `initial_conditions.hpp` | `ZeroIC`, `TaylorGreenIC` — field initialization |
+| `physics.hpp` | `physics::` namespace — momentum RHS, pressure RHS, velocity correction |
+| `integrator.hpp` | `ForwardEuler`, `RK2` — time integration (predict step only) |
+| `pressure_solver.hpp` | `PressureSolver` — Trilinos-based pressure Poisson solve |
+| `output.hpp` | `CSVOutput` — write fields to CSV |
+| `solver.hpp` | `Solver<BC, Integrator>` — orchestrates the projection method |
+
+### Extension points
+
+- **New BC type**: define a struct with `void apply(SimState&)`, pass as first template arg to `Solver`
+- **New integrator**: define a struct with `void predict(SimState&, double re, double dt)`, pass as second template arg
+- **Physics functions** are free functions in `physics::` namespace; if a second set of equations is ever needed, promote to a template parameter
+
+### Kokkos usage
+
+- All compute kernels must use `Kokkos::parallel_for` with `Kokkos::MDRangePolicy<Kokkos::Rank<2>>` and `KOKKOS_LAMBDA`
+- Views use default execution/memory space (set at Kokkos configure time via spack)
+- Host mirrors required for I/O: `Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, view)`
+- `Kokkos::fence()` before timing or Trilinos calls
 
 ## Tests
 

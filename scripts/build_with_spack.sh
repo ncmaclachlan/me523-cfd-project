@@ -58,12 +58,16 @@ echo "Found installed environment: ${ENV_NAME}"
 CMAKE_PREFIX_PATH="$(spack -e "${ENV_PATH}" find --format '{prefix}' | tr '\n' ':')"
 export CMAKE_PREFIX_PATH
 
+# Hint MPI location so FindMPI doesn't pick up conda's MPI from PATH
+MPI_HOME="$(spack -e "${ENV_PATH}" find --format '{prefix}' openmpi 2>/dev/null || true)"
+
 BUILD_DIR="${PROJECT_ROOT}/build"
 
 echo "Configuring (${BUILD_TYPE})..."
 cmake -B "${BUILD_DIR}" \
       -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-      -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
+      -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+      ${MPI_HOME:+-DMPI_HOME="${MPI_HOME}"}
 
 echo "Building..."
 NPROC=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
