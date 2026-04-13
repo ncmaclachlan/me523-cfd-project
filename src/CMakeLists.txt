@@ -25,5 +25,8 @@ endif()
 
 target_link_libraries(ns2d PUBLIC Kokkos::kokkos)
 
-target_include_directories(ns2d PUBLIC ${Trilinos_INCLUDE_DIRS})
-target_link_libraries(ns2d PUBLIC ${Trilinos_LIBRARIES})
+if(USE_TRILINOS)
+    target_include_directories(ns2d PUBLIC ${Trilinos_INCLUDE_DIRS})
+    target_link_libraries(ns2d PUBLIC ${Trilinos_LIBRARIES})
+    target_compile_definitions(ns2d PUBLIC HAS_TRILINOS)
+endif()

@@ -30,6 +30,7 @@ struct Solver {
           rhs   ("rhs",    state.grid.p_nx_total(), state.grid.p_ny_total())
     {
         TaylorGreenIC{}.apply(state);
+        pressure.init(state.grid);
     }
 
     void advance() {
@@ -43,7 +44,7 @@ struct Solver {
         //physics::compute_pressure_rhs(state, u_star, v_star, config.dt, rhs);
 
         // 4. Solve pressure Poisson equation (reads rhs, writes s.p)
-        //pressure.solve(state, rhs);
+        //auto presult = pressure.solve(state, rhs);
 
         // 5. Correct velocity with pressure gradient
         //physics::correct_velocity(state, u_star, v_star, config.dt);

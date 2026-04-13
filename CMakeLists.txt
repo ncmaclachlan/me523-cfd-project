@@ -60,8 +60,11 @@ find_package(OpenMP COMPONENTS CXX)
 # Required: Kokkos — activate a spack environment before configuring
 find_package(Kokkos REQUIRED)
 
-# Required: Trilinos — activate a spack environment before configuring
-find_package(Trilinos REQUIRED)
+# Optional: Trilinos — not needed when using the built-in multigrid solver
+option(USE_TRILINOS "Link against Trilinos" OFF)
+if(USE_TRILINOS)
+    find_package(Trilinos REQUIRED)
+endif()
 
 # config.h written to build directory, include it via target_include_directories
 configure_file(config.h.in ${CMAKE_BINARY_DIR}/config.h)
