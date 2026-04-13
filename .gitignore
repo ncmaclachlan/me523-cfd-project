@@ -19,3 +19,4 @@ spack/*/spack.lock
 spack/*/.spack-env/
 
 Testing/
+hw_7_tex/hw_7.pdf
