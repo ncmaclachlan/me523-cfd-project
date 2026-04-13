@@ -3,7 +3,15 @@
 import argparse
 import os
 
-from . import load_snapshot, plot_pressure, plot_velocity_magnitude
+from . import (
+    load_snapshot,
+    plot_pressure,
+    plot_velocity_magnitude,
+    load_ke,
+    load_divergence,
+    plot_kinetic_energy,
+    plot_divergence,
+)
 
 
 def main():
@@ -29,6 +37,15 @@ def main():
 
     fig, _, _ = plot_velocity_magnitude(data)
     fig.savefig(os.path.join(figures_dir, f"velocity_magnitude.{args.format}"))
+
+    ke_data = load_ke(output_dir)
+    div_data = load_divergence(output_dir)
+
+    fig, _ = plot_kinetic_energy(ke_data)
+    fig.savefig(os.path.join(figures_dir, f"kinetic_energy.{args.format}"))
+
+    fig, _ = plot_divergence(div_data)
+    fig.savefig(os.path.join(figures_dir, f"divergence.{args.format}"))
 
     if args.show:
         import matplotlib.pyplot as plt

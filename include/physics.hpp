@@ -13,7 +13,14 @@ double laplacian(const Kokkos::View<double**>& f, int i, int j,
          + (f(i, j+1) - 2.0*f(i, j) + f(i, j-1)) * inv_dy2;
 }
 
-// add divergence here
+KOKKOS_INLINE_FUNCTION
+double divergence(const Kokkos::View<double**>& u, 
+                 const Kokkos::View<double**>& v,
+                 int i, int j,
+                 double inv_dx, double inv_dy) {
+    return (u(i+1, j) - u(i, j)) * inv_dx
+         + (v(i, j+1) - v(i, j)) * inv_dy;
+}
 
 KOKKOS_INLINE_FUNCTION
 double avg_x(const Kokkos::View<double**>& f, int i, int j) {
@@ -32,6 +39,10 @@ void compute_u_rhs(const SimState& s, double re,
 
 void compute_v_rhs(const SimState& s, double re,
                    Kokkos::View<double**> rhs_v);
+
+double compute_kinetic_energy(const SimState& s);
+
+double compute_l2_divergence(const SimState& s);
 
 void compute_pressure_rhs(const SimState& s,
                            Kokkos::View<double**> u_star,

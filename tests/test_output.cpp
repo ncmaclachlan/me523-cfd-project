@@ -31,7 +31,7 @@ static void test_row_counts() {
     // 2x3 grid → p: 2*3=6 rows, u: 3*3=9 rows, v: 2*4=8 rows (plus header)
     constexpr int nx = 2, ny = 3;
     MacGrid2D grid(nx, ny, 1.0, 1.0);
-    SimState state(grid);
+    SimState state(grid, 1);
 
     CSVOutput out("test_row_counts");
     out.write(state);
@@ -55,7 +55,7 @@ static void test_pressure_values() {
     constexpr int nx = 2, ny = 2;
     constexpr double lx = 1.0, ly = 1.0;
     MacGrid2D grid(nx, ny, lx, ly);
-    SimState state(grid);
+    SimState state(grid, 1);
 
     // Fill pressure on host, then deep_copy to device view
     auto p_h = Kokkos::create_mirror_view(state.p);
@@ -102,7 +102,7 @@ static void test_velocity_coordinates() {
     constexpr int nx = 3, ny = 2;
     constexpr double lx = 3.0, ly = 2.0;
     MacGrid2D grid(nx, ny, lx, ly);
-    SimState state(grid);
+    SimState state(grid, 1);
 
     CSVOutput out("test_vel_coord");
     out.write(state);
