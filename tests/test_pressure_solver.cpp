@@ -12,7 +12,7 @@
 
 static void test_manufactured_solution(int n, double& l2_error) {
     MacGrid2D grid(n, n, 2.0 * M_PI, 2.0 * M_PI);
-    SimState state(grid);
+    SimState state(grid, 1);
 
     // Allocate RHS view matching pressure layout
     Kokkos::View<double**> rhs("rhs", grid.p_nx_total(), grid.p_ny_total());
@@ -66,7 +66,7 @@ static void test_manufactured_solution(int n, double& l2_error) {
 static void test_zero_rhs() {
     const int n = 16;
     MacGrid2D grid(n, n, 2.0 * M_PI, 2.0 * M_PI);
-    SimState state(grid);
+    SimState state(grid, 1);
 
     Kokkos::View<double**> rhs("rhs", grid.p_nx_total(), grid.p_ny_total());
     Kokkos::deep_copy(rhs, 0.0);
