@@ -56,6 +56,10 @@ void compute_v_diff_rhs(const SimState& s, double re,
 
 double compute_kinetic_energy(const SimState& s);
 
+// Returns dt = cfl * min(dx, dy) / u_max based on current velocity field.
+// u_max is the maximum absolute velocity over all u and v face values.
+double compute_cfl_dt(const SimState& s, double cfl);
+
 double compute_l2_divergence(const SimState& s);
 
 void compute_pressure_rhs(const SimState& s,
