@@ -114,9 +114,9 @@ double compute_l2_divergence(const SimState& s) {
             lsum += d * d;
         }, sum_div2);
 
-    // L2 norm = sqrt(sum of div^2 over all cells). Do not divide by cell count —
-    // that would give an RMS, not the L2 norm that the tests and diagnostics expect.
-    return Kokkos::sqrt(sum_div2);
+    // RMS divergence: divide by cell count before taking root so the metric is
+    // grid-size-independent and meaningful for mesh refinement studies.
+    return Kokkos::sqrt(sum_div2 / (s.grid.nx * s.grid.ny));
 }
 
 void compute_pressure_rhs(const SimState& s,

@@ -75,8 +75,8 @@ static void test_divergence_free_linear() {
     std::cout << "PASS: test_divergence_free_linear (L2_div = " << l2 << ")\n";
 }
 
-// Known nonzero divergence: u = x, v = y  -> du/dx = 1, dv/dy = 1  -> div = 2
-// L2 = sqrt(nx*ny * 4) = 2*sqrt(nx*ny)
+// Known nonzero divergence: u = x, v = y  -> du/dx = 1, dv/dy = 1  -> div = 2 everywhere
+// RMS = sqrt(sum(div^2) / (nx*ny)) = sqrt(4) = 2
 static void test_known_divergence() {
     constexpr int nx = 4, ny = 4;
     constexpr double lx = 1.0, ly = 1.0;
@@ -103,10 +103,9 @@ static void test_known_divergence() {
 
     double l2 = physics::compute_l2_divergence(state);
 
-    // Each cell has div = (dx/dx) + (dy/dy) = 1 + 1 = 2
-    // sum of div^2 = nx*ny * 4 = 64
-    // L2 = sqrt(64) = 8
-    double expected = 2.0 * std::sqrt(static_cast<double>(nx * ny));
+    // Each cell has div = 1 + 1 = 2, so sum(div^2) = nx*ny * 4
+    // RMS = sqrt(nx*ny * 4 / (nx*ny)) = 2
+    double expected = 2.0;
     assert(std::fabs(l2 - expected) < 1e-10);
     std::cout << "PASS: test_known_divergence (L2_div = " << l2
               << ", expected = " << expected << ")\n";
