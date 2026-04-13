@@ -71,6 +71,52 @@ void compute_v_rhs(const SimState& s, double re,
     });
 }
 
+double compute_kinetic_energy(const SimState& s){
+    SimState::View2D u = s.u;
+    SimState::View2D v = s.v;
+
+    double sum_u2 = 0.0;
+    Kokkos::parallel_reduce("KE_u", 
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.u_i_begin(), s.grid.u_j_begin()},
+            {s.grid.u_i_end(), s.grid.u_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lsum){
+            lsum += u(i, j) * u(i, j);
+        }, sum_u2);
+
+    
+    double sum_v2 = 0.0;
+    Kokkos::parallel_reduce("KE_v", 
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.v_i_begin(), s.grid.v_j_begin()},
+            {s.grid.v_i_end(), s.grid.v_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lsum){
+            lsum += v(i, j) * v(i, j);
+        }, sum_v2);
+    
+    return 0.5 * (sum_u2 + sum_v2);
+}
+
+double compute_l2_divergence(const SimState& s) {
+    const double inv_dx = 1.0 / s.grid.dx;
+    const double inv_dy = 1.0 / s.grid.dy;
+
+    SimState::View2D u = s.u;
+    SimState::View2D v = s.v;
+
+    double sum_div2 = 0.0;
+    Kokkos::parallel_reduce("L2_div",
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.p_i_begin(), s.grid.p_j_begin()},
+            {s.grid.p_i_end(),   s.grid.p_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lsum) {
+            double d = divergence(u, v, i, j, inv_dx, inv_dy);
+            lsum += d * d;
+        }, sum_div2);
+
+    return Kokkos::sqrt(sum_div2 / (s.grid.nx * s.grid.ny));
+}
+
 void compute_pressure_rhs(const SimState& s,
                            Kokkos::View<double**> u_star,
                            Kokkos::View<double**> v_star,
