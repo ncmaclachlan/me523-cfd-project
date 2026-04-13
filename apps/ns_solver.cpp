@@ -5,6 +5,7 @@ int main(int argc, char* argv[]) {
     Kokkos::initialize(argc, argv);
     {
         RunConfig cfg;
+<<<<<<< HEAD
         cfg.nx = 64;
         cfg.ny = 64;
         cfg.re = 100.0;
