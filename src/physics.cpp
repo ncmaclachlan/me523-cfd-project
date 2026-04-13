@@ -301,4 +301,60 @@ void correct_velocity(SimState& s,
         });
 }
 
+ErrorNorms compute_error_norms(const SimState& s, double re) {
+    const double nu    = 1.0 / re;
+    const double decay = Kokkos::exp(-2.0 * nu * s.time);
+    const double dx    = s.grid.dx;
+    const double dy    = s.grid.dy;
+    const int    ng    = MacGrid2D::ng;
+
+    SimState::View2D u = s.u;
+    SimState::View2D v = s.v;
+
+    // u-velocity error
+    double u_sum2 = 0.0, u_max = 0.0;
+    int u_count = (s.grid.u_i_end() - s.grid.u_i_begin())
+                * (s.grid.u_j_end() - s.grid.u_j_begin());
+
+    Kokkos::parallel_reduce("err_u",
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.u_i_begin(), s.grid.u_j_begin()},
+            {s.grid.u_i_end(),   s.grid.u_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lsum2, double& lmax) {
+            double x = (i - ng) * dx;
+            double y = (j - ng + 0.5) * dy;
+            double u_exact = Kokkos::sin(x) * Kokkos::cos(y) * decay;
+            double err = u(i, j) - u_exact;
+            lsum2 += err * err;
+            if (Kokkos::abs(err) > lmax) lmax = Kokkos::abs(err);
+        },
+        Kokkos::Sum<double>(u_sum2),
+        Kokkos::Max<double>(u_max));
+
+    // v-velocity error
+    double v_sum2 = 0.0, v_max = 0.0;
+    int v_count = (s.grid.v_i_end() - s.grid.v_i_begin())
+                * (s.grid.v_j_end() - s.grid.v_j_begin());
+
+    Kokkos::parallel_reduce("err_v",
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.v_i_begin(), s.grid.v_j_begin()},
+            {s.grid.v_i_end(),   s.grid.v_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lsum2, double& lmax) {
+            double x = (i - ng + 0.5) * dx;
+            double y = (j - ng) * dy;
+            double v_exact = -Kokkos::cos(x) * Kokkos::sin(y) * decay;
+            double err = v(i, j) - v_exact;
+            lsum2 += err * err;
+            if (Kokkos::abs(err) > lmax) lmax = Kokkos::abs(err);
+        },
+        Kokkos::Sum<double>(v_sum2),
+        Kokkos::Max<double>(v_max));
+
+    double l2   = Kokkos::sqrt((u_sum2 + v_sum2) / (u_count + v_count));
+    double linf = Kokkos::max(u_max, v_max);
+
+    return {l2, linf};
+}
+
 } // namespace physics

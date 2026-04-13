@@ -71,6 +71,11 @@ struct Solver {
             state.ke_history(state.step)   = physics::compute_kinetic_energy(state);
             state.div_history(state.step)  = physics::compute_l2_divergence(state);
             state.time_history(state.step) = state.time + dt;
+            if (config.diagnostics) {
+                auto enorms = physics::compute_error_norms(state, config.re);
+                state.err_l2_history(state.step)   = enorms.l2;
+                state.err_linf_history(state.step) = enorms.linf;
+            }
         }
 
         state.time += dt;
@@ -92,5 +97,9 @@ struct Solver {
         output.write(state);
         output.write_kinetic_energy(state);
         output.write_l2_divergence(state);
+        if (config.diagnostics) {
+            output.write_exact(state, config.re);
+            output.write_error_norms(state);
+        }
     }
 };

@@ -62,6 +62,9 @@ double compute_cfl_dt(const SimState& s, double cfl);
 
 double compute_l2_divergence(const SimState& s);
 
+struct ErrorNorms { double l2; double linf; };
+ErrorNorms compute_error_norms(const SimState& s, double re);
+
 void compute_pressure_rhs(const SimState& s,
                            Kokkos::View<double**> u_star,
                            Kokkos::View<double**> v_star,

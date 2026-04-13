@@ -9,7 +9,8 @@ struct SimState {
 
     MacGrid2D grid;
     View2D u, v, p, div;
-    HostView1D ke_history, div_history, time_history;
+    HostView1D ke_history, div_history, time_history,
+               err_l2_history, err_linf_history;
     int    n_steps;
     double time = 0.0;
     int    step = 0;
@@ -23,5 +24,7 @@ struct SimState {
           ke_history("ke_history", n_steps_),
           div_history("div_history", n_steps_),
           time_history("time_history", n_steps_),
+          err_l2_history("err_l2_history", n_steps_),
+          err_linf_history("err_linf_history", n_steps_),
           n_steps(n_steps_) {}
 };
