@@ -63,6 +63,25 @@ export CMAKE_PREFIX_PATH
 # Setting MPI_CXX_COMPILER explicitly overrides PATH-based detection.
 MPI_HOME="$(spack -e "${ENV_PATH}" find --format '{prefix}' openmpi 2>/dev/null || true)"
 
+# Pick up the C/C++ compiler that spack built the environment with, so that
+# CMake uses the same compiler as the spack-installed libraries.
+# Step 1: get the compiler spec (e.g. gcc@14.2.0) from any concrete package.
+# Step 2: look up the actual binary paths via 'spack compiler info'.
+COMPILER_SPEC="$(spack -e "${ENV_PATH}" find --format '{compiler}' cmake 2>/dev/null \
+    | head -1 | sed 's|/.*||' || true)"  # strip hash suffix, e.g. gcc@14.2.0/abc -> gcc@14.2.0
+COMPILER_CMAKE_ARGS=()
+if [[ -n "${COMPILER_SPEC}" ]]; then
+    COMPILER_INFO="$(spack compiler info "${COMPILER_SPEC}" 2>/dev/null || true)"
+    SPACK_CC="$(echo "${COMPILER_INFO}"  | awk -F': ' '/^[[:space:]]+cc:/{print $2}'  | tr -d ' ')"
+    SPACK_CXX="$(echo "${COMPILER_INFO}" | awk -F': ' '/^[[:space:]]+cxx:/{print $2}' | tr -d ' ')"
+    if [[ -n "${SPACK_CC}" && -x "${SPACK_CC}" && -n "${SPACK_CXX}" && -x "${SPACK_CXX}" ]]; then
+        COMPILER_CMAKE_ARGS+=(
+            -DCMAKE_C_COMPILER="${SPACK_CC}"
+            -DCMAKE_CXX_COMPILER="${SPACK_CXX}"
+        )
+    fi
+fi
+
 BUILD_DIR="${PROJECT_ROOT}/build"
 
 MPI_CMAKE_ARGS=()
@@ -79,6 +98,7 @@ echo "Configuring (${BUILD_TYPE})..."
 cmake -B "${BUILD_DIR}" \
       -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
       -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+      "${COMPILER_CMAKE_ARGS[@]}" \
       "${MPI_CMAKE_ARGS[@]}"
 
 echo "Building..."
