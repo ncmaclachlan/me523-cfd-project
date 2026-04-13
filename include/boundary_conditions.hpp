@@ -15,8 +15,8 @@ struct LidDrivenCavityBC {
         Kokkos::parallel_for("ldc_u_lr",
             Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
             KOKKOS_LAMBDA(int j) {
-                u(g.u_i_begin(),     j) = 0.0;  // left wall
-                u(g.u_i_end() - 1,   j) = 0.0;  // right wall
+                u(g.u_i_begin(),     j) = 0.0;   // left wall
+                u(g.u_i_end() - 1,   j) = 0.0;   // right wall
             });
 
         // Bottom/top: u-face is half a cell from the wall, enforce via ghost cell
@@ -35,8 +35,8 @@ struct LidDrivenCavityBC {
         Kokkos::parallel_for("ldc_v_tb",
             Kokkos::RangePolicy<>(g.v_i_begin(), g.v_i_end()),
             KOKKOS_LAMBDA(int i) {
-                v(i, g.v_j_begin())     = 0.0;  // bottom wall
-                v(i, g.v_j_end() - 1)   = 0.0;  // top wall
+                v(i, g.v_j_begin())     = 0.0;   // bottom wall
+                v(i, g.v_j_end() - 1)   = 0.0;   // top wall
             });
 
         // Left/right: v-face is half a cell from the wall, enforce via ghost cell
@@ -58,6 +58,17 @@ struct LidDrivenCavityBC {
 
 struct PeriodicBC {
     void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {
+        // Sync duplicate periodic face: u at i=begin and i=end-1 are the same
+        // physical face.  Average to keep both sides symmetric, then set ghosts.
+        Kokkos::parallel_for("periodic_u_sync",
+            Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+            KOKKOS_LAMBDA(const int j) {
+                const double avg = 0.5 * (u(g.u_i_begin(), j)
+                                        + u(g.u_i_end() - 1, j));
+                u(g.u_i_begin(),     j) = avg;
+                u(g.u_i_end() - 1,   j) = avg;
+            });
+
         Kokkos::parallel_for("periodic_u_x",
             Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
             KOKKOS_LAMBDA(const int j) {
@@ -83,6 +94,16 @@ struct PeriodicBC {
     }
 
     void apply_v(const MacGrid2D& g, Kokkos::View<double**> v) const {
+        // Sync duplicate periodic face: v at j=begin and j=end-1 are the same
+        Kokkos::parallel_for("periodic_v_sync",
+            Kokkos::RangePolicy<>(g.v_i_begin(), g.v_i_end()),
+            KOKKOS_LAMBDA(const int i) {
+                const double avg = 0.5 * (v(i, g.v_j_begin())
+                                        + v(i, g.v_j_end() - 1));
+                v(i, g.v_j_begin())     = avg;
+                v(i, g.v_j_end() - 1)   = avg;
+            });
+
         Kokkos::parallel_for("periodic_v_x",
             Kokkos::RangePolicy<>(g.v_j_begin(), g.v_j_end()),
             KOKKOS_LAMBDA(const int j) {

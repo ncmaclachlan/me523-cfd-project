@@ -80,7 +80,7 @@ struct Solver {
     void run() {
         CSVOutput output(config.output_path());
 
-        while (state.time < config.t_end) {
+        while (state.step < state.n_steps) {
             advance();
 
             /* if (config.output_interval > 0 &&
