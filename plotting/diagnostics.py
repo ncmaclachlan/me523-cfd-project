@@ -69,10 +69,10 @@ def plot_kinetic_energy(ke_data, *, ax=None):
     else:
         fig = ax.figure
 
-    ax.plot(ke_data["time"], ke_data["kinetic_energy"], linewidth=1.5)
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Kinetic Energy")
-    ax.set_title("Kinetic Energy Time History")
+    ax.plot(ke_data["time"], ke_data["kinetic_energy"], color="k")
+    ax.set_xlabel(r"$t$")
+    ax.set_ylabel(r"$E_k$")
+    ax.set_title("Kinetic Energy")
     ax.ticklabel_format(axis="y", style="sci", scilimits=(-2, 3))
 
     return fig, ax
@@ -100,10 +100,10 @@ def plot_divergence(div_data, *, ax=None, log_scale=True):
     else:
         fig = ax.figure
 
-    ax.plot(div_data["time"], div_data["l2_divergence"], linewidth=1.5)
-    ax.set_xlabel("Time")
+    ax.plot(div_data["time"], div_data["l2_divergence"], color="k")
+    ax.set_xlabel(r"$t$")
     ax.set_ylabel(r"$\| \nabla \cdot \mathbf{u} \|_2$")
-    ax.set_title("Divergence Time History")
+    ax.set_title("Divergence")
     if log_scale:
         ax.set_yscale("log")
 
@@ -124,7 +124,7 @@ def plot_diagnostics(ke_data, div_data):
     -------
     fig, (ax_ke, ax_div)
     """
-    fig, (ax_ke, ax_div) = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+    fig, (ax_ke, ax_div) = plt.subplots(2, 1, figsize=(3.5, 4.5), sharex=True)
 
     plot_kinetic_energy(ke_data, ax=ax_ke)
     ax_ke.set_xlabel("")  # shared x-axis, label only on bottom
