@@ -32,8 +32,10 @@ static void test_uniform_field() {
 
     // u owned: (nx+1)*ny = 5*4 = 20 entries, each 2^2=4  -> sum_u2 = 80
     // v owned: nx*(ny+1) = 4*5 = 20 entries, each 3^2=9  -> sum_v2 = 180
-    // KE = 0.5*(80+180) = 130
-    double expected = 130.0;
+    // KE = 0.5*(sum_u2 + sum_v2) * dx*dy  — compute_kinetic_energy integrates
+    // over the domain, not a plain discrete sum. Area factor added in commit
+    // f77dcf9; expected value updated here to match (dx=dy=0.25 for 4x4 on [0,1]^2).
+    double expected = 130.0 * grid.dx * grid.dy;
     assert(std::fabs(ke - expected) < 1e-10);
     std::cout << "PASS: test_uniform_field (KE = " << ke << ")\n";
 }

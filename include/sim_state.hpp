@@ -3,12 +3,13 @@
 #include "grid.hpp"
 
 struct SimState {
-    using View2D = Kokkos::View<double**>;
-    using View1D = Kokkos::View<double*>;
+    using View2D     = Kokkos::View<double**>;
+    using View1D     = Kokkos::View<double*>;
+    using HostView1D = Kokkos::View<double*, Kokkos::HostSpace>;
 
     MacGrid2D grid;
     View2D u, v, p, div;
-    View1D ke_history, div_history;
+    HostView1D ke_history, div_history;
     int    n_steps;
     double time = 0.0;
     int    step = 0;
