@@ -9,8 +9,10 @@ from . import (
     plot_velocity_magnitude,
     load_ke,
     load_divergence,
+    load_error_norms,
     plot_kinetic_energy,
     plot_divergence,
+    plot_error_norms,
 )
 
 
@@ -46,6 +48,12 @@ def main():
 
     fig, _ = plot_divergence(div_data)
     fig.savefig(os.path.join(figures_dir, f"divergence.{args.format}"))
+
+    error_csv = os.path.join(output_dir, "output_error.csv")
+    if os.path.isfile(error_csv):
+        err_data = load_error_norms(output_dir)
+        fig, _ = plot_error_norms(err_data)
+        fig.savefig(os.path.join(figures_dir, f"error_norms.{args.format}"))
 
     if args.show:
         import matplotlib.pyplot as plt

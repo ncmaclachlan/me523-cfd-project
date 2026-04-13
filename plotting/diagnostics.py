@@ -110,6 +110,65 @@ def plot_divergence(div_data, *, ax=None, log_scale=True):
     return fig, ax
 
 
+def load_error_norms(directory):
+    """Load error norm time history from output_error.csv.
+
+    Parameters
+    ----------
+    directory : str
+        Path to output directory containing ``output_error.csv``.
+
+    Returns
+    -------
+    dict
+        Keys ``"step"``, ``"time"``, ``"l2_error"``, ``"linf_error"``
+        as 1D arrays.
+    """
+    path = os.path.join(directory, "output_error.csv")
+    raw = np.loadtxt(path, delimiter=",", skiprows=1)
+    return {
+        "step": raw[:, 0].astype(int),
+        "time": raw[:, 1],
+        "l2_error": raw[:, 2],
+        "linf_error": raw[:, 3],
+    }
+
+
+def plot_error_norms(err_data, *, ax=None, log_scale=True):
+    """Plot L2 and L-infinity error norms vs time.
+
+    Parameters
+    ----------
+    err_data : dict
+        Output of :func:`load_error_norms`.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. Created if None.
+    log_scale : bool
+        Use log scale on y-axis (default True).
+
+    Returns
+    -------
+    fig, ax
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
+
+    ax.plot(err_data["time"], err_data["l2_error"],
+            color="k", label=r"$\| e \|_2$")
+    ax.plot(err_data["time"], err_data["linf_error"],
+            color="k", linestyle="--", label=r"$\| e \|_\infty$")
+    ax.set_xlabel(r"$t$")
+    ax.set_ylabel("Error norm")
+    ax.set_title("Velocity Error")
+    ax.legend()
+    if log_scale:
+        ax.set_yscale("log")
+
+    return fig, ax
+
+
 def plot_diagnostics(ke_data, div_data):
     """Two-panel figure with kinetic energy (top) and divergence (bottom).
 

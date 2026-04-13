@@ -6,8 +6,10 @@ from .fields import plot_pressure, plot_velocity_magnitude
 from .diagnostics import (
     load_ke,
     load_divergence,
+    load_error_norms,
     plot_kinetic_energy,
     plot_divergence,
+    plot_error_norms,
     plot_diagnostics,
 )
 
@@ -17,7 +19,9 @@ __all__ = [
     "plot_velocity_magnitude",
     "load_ke",
     "load_divergence",
+    "load_error_norms",
     "plot_kinetic_energy",
     "plot_divergence",
+    "plot_error_norms",
     "plot_diagnostics",
 ]
