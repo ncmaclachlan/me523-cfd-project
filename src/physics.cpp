@@ -94,7 +94,7 @@ double compute_kinetic_energy(const SimState& s){
             lsum += v(i, j) * v(i, j);
         }, sum_v2);
     
-    return 0.5 * (sum_u2 + sum_v2);
+    return 0.5 * (sum_u2 + sum_v2) * s.grid.dx * s.grid.dy;
 }
 
 double compute_l2_divergence(const SimState& s) {
