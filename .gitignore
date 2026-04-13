@@ -17,3 +17,5 @@ docs/latex/
 # Spack generated files
 spack/*/spack.lock
 spack/*/.spack-env/
+
+Testing/

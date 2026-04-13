@@ -73,3 +73,29 @@ void CSVOutput::write(const SimState& s) const {
 
     std::cout << "Output written to " << this->filename << "_{p,u,v}.csv\n";
 }
+
+void CSVOutput::write_kinetic_energy(const SimState& s, double dt) const {
+    std::ofstream f(this->filename + "_ke.csv");
+    if (!f.is_open())
+        throw std::runtime_error("Cannot open output file: " + this->filename + "_ke.csv");
+    f << std::scientific << std::setprecision(10);
+    f << "step,time,kinetic_energy\n";
+    for (int n = 0; n < s.step; ++n) {
+        f << n << "," << (n + 1) * dt << "," << s.ke_history(n) << "\n";
+    }
+
+    std::cout << "Kinetic energy history written to " << this->filename << "_ke.csv\n";
+}
+
+void CSVOutput::write_l2_divergence(const SimState& s, double dt) const {
+    std::ofstream f(this->filename + "_div.csv");
+    if (!f.is_open())
+        throw std::runtime_error("Cannot open output file: " + this->filename + "_div.csv");
+    f << std::scientific << std::setprecision(10);
+    f << "step,time,l2_divergence\n";
+    for (int n = 0; n < s.step; ++n) {
+        f << n << "," << (n + 1) * dt << "," << s.div_history(n) << "\n";
+    }
+
+    std::cout << "L2 divergence history written to " << this->filename << "_div.csv\n";
+}

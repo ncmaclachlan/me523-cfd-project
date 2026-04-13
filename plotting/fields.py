@@ -25,9 +25,10 @@ def _contour_field(x, y, z, *, cmap, title, label, levels=N_LEVELS,
         levels = np.linspace(lo, hi, levels)
 
     cs = ax.contourf(x, y, z, levels=levels, cmap=cmap)
-    fig.colorbar(cs, ax=ax, label=label)
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
+    cb = fig.colorbar(cs, ax=ax, label=label, fraction=0.046, pad=0.04)
+    cb.ax.tick_params(labelsize=8, direction="in")
+    ax.set_xlabel(r"$x$")
+    ax.set_ylabel(r"$y$")
     ax.set_title(title)
     ax.set_aspect("equal")
 
@@ -48,7 +49,7 @@ def plot_pressure(data, *, ax=None, levels=N_LEVELS):
         p["x"], p["y"], p["val"],
         cmap=CMAP_PRESSURE,
         title="Pressure",
-        label="p",
+        label=r"$p$",
         levels=levels,
         ax=ax,
         vmin=-vabs,
@@ -73,7 +74,7 @@ def plot_velocity_magnitude(data, *, ax=None, levels=N_LEVELS):
         data["p"]["x"], data["p"]["y"], vmag,
         cmap=CMAP_VELOCITY,
         title="Velocity Magnitude",
-        label="|V|",
+        label=r"$|\mathbf{V}|$",
         levels=levels,
         ax=ax,
         vmin=0,
