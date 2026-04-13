@@ -304,12 +304,14 @@ PressureSolveResult PressureSolver::solve(SimState& s,
         rnorm = std::sqrt(rnorm / static_cast<double>(nx * ny));
 
         if (rnorm < tol) {
+            periodic_fill(levels_[0].phi, nx, ny);
             Kokkos::deep_copy(s.p, levels_[0].phi);
             return {iter + 1, rnorm};
         }
     }
 
     // Hit max iterations — copy solution anyway
+    periodic_fill(levels_[0].phi, nx, ny);
     Kokkos::deep_copy(s.p, levels_[0].phi);
     return {max_vcycles, rnorm};
 }

@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
         cfg.nx = 64;
         cfg.ny = 64;
         cfg.re = 100.0;
-        cfg.dt = 1e-3;
+        cfg.dt = 1e-5;
         cfg.t_end = 1.0;
 
         Solver<PeriodicBC, CrankThatNicolson> solver(cfg);
