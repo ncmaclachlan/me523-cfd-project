@@ -1,12 +1,18 @@
 #include "output.hpp"
 
 #include <Kokkos_Core.hpp>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
 
-CSVOutput::CSVOutput(std::string fname) : filename(std::move(fname)) {}
+CSVOutput::CSVOutput(std::string fname) : filename(std::move(fname)) {
+    auto parent = std::filesystem::path(filename).parent_path();
+    if (!parent.empty()) {
+        std::filesystem::create_directories(parent);
+    }
+}
 
 void CSVOutput::write(const SimState& s) const {
     Kokkos::fence();

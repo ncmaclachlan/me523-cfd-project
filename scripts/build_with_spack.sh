@@ -58,16 +58,28 @@ echo "Found installed environment: ${ENV_NAME}"
 CMAKE_PREFIX_PATH="$(spack -e "${ENV_PATH}" find --format '{prefix}' | tr '\n' ':')"
 export CMAKE_PREFIX_PATH
 
-# Hint MPI location so FindMPI doesn't pick up conda's MPI from PATH
+# Force FindMPI to use spack's OpenMPI, not conda's.
+# MPI_HOME alone is not enough — FindMPI prefers mpicc on PATH (conda).
+# Setting MPI_CXX_COMPILER explicitly overrides PATH-based detection.
 MPI_HOME="$(spack -e "${ENV_PATH}" find --format '{prefix}' openmpi 2>/dev/null || true)"
 
 BUILD_DIR="${PROJECT_ROOT}/build"
+
+MPI_CMAKE_ARGS=()
+if [[ -n "${MPI_HOME}" ]]; then
+    MPI_CMAKE_ARGS+=(
+        -DMPI_HOME="${MPI_HOME}"
+        -DMPI_CXX_COMPILER="${MPI_HOME}/bin/mpicxx"
+        -DMPI_C_COMPILER="${MPI_HOME}/bin/mpicc"
+        -DMPIEXEC_EXECUTABLE="${MPI_HOME}/bin/mpiexec"
+    )
+fi
 
 echo "Configuring (${BUILD_TYPE})..."
 cmake -B "${BUILD_DIR}" \
       -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
       -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
-      ${MPI_HOME:+-DMPI_HOME="${MPI_HOME}"}
+      "${MPI_CMAKE_ARGS[@]}"
 
 echo "Building..."
 NPROC=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)

@@ -12,6 +12,29 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
 
+# Prevent conda/miniconda lib dirs from polluting RPATH — they contain
+# an incompatible OpenMPI that shadows the spack-installed one at runtime.
+# CMAKE_BUILD_RPATH_USE_LINK_PATH=OFF stops CMake from auto-adding every
+# linked library's directory to the build RPATH; we rely on CMAKE_BUILD_RPATH
+# (populated below from spack) instead.
+# Prevent conda/miniconda lib dirs from polluting RPATH — they contain
+# an incompatible OpenMPI that shadows the spack-installed one at runtime.
+# We disable automatic RPATH from link paths and instead build an explicit
+# RPATH from CMAKE_PREFIX_PATH (set by spack), filtering out conda entries.
+set(CMAKE_BUILD_RPATH_USE_LINK_PATH OFF)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH OFF)
+list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "miniconda|anaconda|conda")
+
+# Build explicit RPATH from spack prefix paths (skip any conda leftovers)
+set(_spack_rpath "")
+foreach(_prefix ${CMAKE_PREFIX_PATH})
+  if(NOT _prefix MATCHES "miniconda|anaconda|conda" AND IS_DIRECTORY "${_prefix}/lib")
+    list(APPEND _spack_rpath "${_prefix}/lib")
+  endif()
+endforeach()
+set(CMAKE_BUILD_RPATH "${_spack_rpath}")
+set(CMAKE_INSTALL_RPATH "${_spack_rpath}")
+
 # ---------------------------------------------------------------------------
 # Spack integration
 # Activate a spack environment before configuring so that find_package calls
