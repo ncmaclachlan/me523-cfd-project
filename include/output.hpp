@@ -8,6 +8,6 @@ struct CSVOutput {
 
     explicit CSVOutput(std::string fname);
     void write(const SimState& s) const;
-    void write_kinetic_energy(const SimState& s, double dt) const;
-    void write_l2_divergence(const SimState& s, double dt) const;
+    void write_kinetic_energy(const SimState& s) const;
+    void write_l2_divergence(const SimState& s) const;
 };

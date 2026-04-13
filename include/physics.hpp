@@ -34,13 +34,31 @@ double avg_y(const Kokkos::View<double**>& f, int i, int j) {
 
 // --- Stage kernels (defined in physics.cpp) ---
 
+// Full explicit RHS: convection + diffusion (used by ForwardEuler)
 void compute_u_rhs(const SimState& s, double re,
                    Kokkos::View<double**> rhs_u);
 
 void compute_v_rhs(const SimState& s, double re,
                    Kokkos::View<double**> rhs_v);
 
+// Split RHS for Crank-Nicolson: convection and diffusion separately
+void compute_u_conv_rhs(const SimState& s,
+                        Kokkos::View<double**> rhs_u);
+
+void compute_u_diff_rhs(const SimState& s, double re,
+                        Kokkos::View<double**> rhs_u);
+
+void compute_v_conv_rhs(const SimState& s,
+                        Kokkos::View<double**> rhs_v);
+
+void compute_v_diff_rhs(const SimState& s, double re,
+                        Kokkos::View<double**> rhs_v);
+
 double compute_kinetic_energy(const SimState& s);
+
+// Returns dt = cfl * min(dx, dy) / u_max based on current velocity field.
+// u_max is the maximum absolute velocity over all u and v face values.
+double compute_cfl_dt(const SimState& s, double cfl);
 
 double compute_l2_divergence(const SimState& s);
 
