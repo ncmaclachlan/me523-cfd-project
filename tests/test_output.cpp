@@ -145,12 +145,71 @@ static void test_velocity_coordinates() {
     std::cout << "PASS: test_velocity_coordinates\n";
 }
 
+static void test_write_kinetic_energy() {
+    constexpr int n = 4;
+    MacGrid2D grid(2, 2, 1.0, 1.0);
+    SimState state(grid, n);
+
+    // Populate ke_history and time_history on the host views directly
+    for (int i = 0; i < n; ++i) {
+        state.ke_history(i)   = 1.0 * (i + 1);    // 1, 2, 3, 4
+        state.time_history(i) = 0.5 * (i + 1);    // 0.5, 1.0, 1.5, 2.0
+    }
+    state.step = n;
+
+    CSVOutput out("test_ke_out");
+    out.write_kinetic_energy(state);
+
+    auto csv = read_csv("test_ke_out_ke.csv");
+    assert(csv.size() == 1 + n);
+    assert(csv[0][0] == "step" && csv[0][1] == "time" && csv[0][2] == "kinetic_energy");
+
+    for (int i = 0; i < n; ++i) {
+        assert(std::stoi(csv[i + 1][0]) == i);
+        assert(std::fabs(std::stod(csv[i + 1][1]) - state.time_history(i)) < 1e-8);
+        assert(std::fabs(std::stod(csv[i + 1][2]) - state.ke_history(i))   < 1e-8);
+    }
+
+    std::remove("test_ke_out_ke.csv");
+    std::cout << "PASS: test_write_kinetic_energy\n";
+}
+
+static void test_write_l2_divergence() {
+    constexpr int n = 3;
+    MacGrid2D grid(2, 2, 1.0, 1.0);
+    SimState state(grid, n);
+
+    for (int i = 0; i < n; ++i) {
+        state.div_history(i)  = 1e-3 * (i + 1);
+        state.time_history(i) = 0.1 * (i + 1);
+    }
+    state.step = n;
+
+    CSVOutput out("test_div_out");
+    out.write_l2_divergence(state);
+
+    auto csv = read_csv("test_div_out_div.csv");
+    assert(csv.size() == 1 + n);
+    assert(csv[0][0] == "step" && csv[0][1] == "time" && csv[0][2] == "l2_divergence");
+
+    for (int i = 0; i < n; ++i) {
+        assert(std::stoi(csv[i + 1][0]) == i);
+        assert(std::fabs(std::stod(csv[i + 1][1]) - state.time_history(i)) < 1e-8);
+        assert(std::fabs(std::stod(csv[i + 1][2]) - state.div_history(i))  < 1e-10);
+    }
+
+    std::remove("test_div_out_div.csv");
+    std::cout << "PASS: test_write_l2_divergence\n";
+}
+
 int main(int argc, char* argv[]) {
     Kokkos::initialize(argc, argv);
     {
         test_row_counts();
         test_pressure_values();
         test_velocity_coordinates();
+        test_write_kinetic_energy();
+        test_write_l2_divergence();
     }
     Kokkos::finalize();
     std::cout << "All output tests passed.\n";

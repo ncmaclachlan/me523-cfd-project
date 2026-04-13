@@ -9,8 +9,9 @@ struct RunConfig {
     double lx = 2.0 * M_PI;
     double ly = 2.0 * M_PI;
 
-    double dt    = 1e-3;
-    double t_end = 1.0;
+    double dt    = 1e-3;   // used only when cfl <= 0
+    double cfl   = 0.5;   // adaptive CFL number; set <= 0 to use fixed dt
+    double t_end = 10.0;
     double re    = 100.0;
 
     int         output_interval = 100;

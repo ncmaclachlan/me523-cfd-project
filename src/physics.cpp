@@ -185,6 +185,40 @@ double compute_kinetic_energy(const SimState& s){
     return 0.5 * (sum_u2 + sum_v2) * s.grid.dx * s.grid.dy;
 }
 
+double compute_cfl_dt(const SimState& s, double cfl) {
+    SimState::View2D u = s.u;
+    SimState::View2D v = s.v;
+
+    double u_max = 0.0;
+    Kokkos::parallel_reduce("cfl_u",
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.u_i_begin(), s.grid.u_j_begin()},
+            {s.grid.u_i_end(),   s.grid.u_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lmax) {
+            const double val = Kokkos::fabs(u(i, j));
+            if (val > lmax) lmax = val;
+        },
+        Kokkos::Max<double>(u_max));
+
+    double v_max = 0.0;
+    Kokkos::parallel_reduce("cfl_v",
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+            {s.grid.v_i_begin(), s.grid.v_j_begin()},
+            {s.grid.v_i_end(),   s.grid.v_j_end()}),
+        KOKKOS_LAMBDA(int i, int j, double& lmax) {
+            const double val = Kokkos::fabs(v(i, j));
+            if (val > lmax) lmax = val;
+        },
+        Kokkos::Max<double>(v_max));
+
+    const double vel_max = Kokkos::max(u_max, v_max);
+    const double h       = Kokkos::min(s.grid.dx, s.grid.dy);
+
+    // Guard against zero velocity (t=0 or fully damped flow)
+    if (vel_max < 1e-14) return cfl * h;
+    return cfl * h / vel_max;
+}
+
 double compute_l2_divergence(const SimState& s) {
     const double inv_dx = 1.0 / s.grid.dx;
     const double inv_dy = 1.0 / s.grid.dy;
