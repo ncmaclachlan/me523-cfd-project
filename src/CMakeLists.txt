@@ -5,6 +5,7 @@ add_library(ns2d
     physics.cpp
     pressure_solver.cpp
     output.cpp
+    # viscous_solver is header-only (templated on BC)
 )
 
 target_include_directories(ns2d

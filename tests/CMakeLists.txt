@@ -13,3 +13,11 @@ add_test(NAME KineticEnergyTest COMMAND test_kinetic_energy)
 add_executable(test_l2_divergence test_l2_divergence.cpp)
 target_link_libraries(test_l2_divergence PRIVATE ns2d)
 add_test(NAME L2DivergenceTest COMMAND test_l2_divergence)
+
+add_executable(test_viscous_solver test_viscous_solver.cpp)
+target_link_libraries(test_viscous_solver PRIVATE ns2d)
+add_test(NAME ViscousSolverTest COMMAND test_viscous_solver)
+
+add_executable(test_integrators test_integrators.cpp)
+target_link_libraries(test_integrators PRIVATE ns2d)
+add_test(NAME IntegratorsTest COMMAND test_integrators)

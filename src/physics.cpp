@@ -71,6 +71,94 @@ void compute_v_rhs(const SimState& s, double re,
     });
 }
 
+void compute_u_conv_rhs(const SimState& s,
+                        Kokkos::View<double**> rhs_u) {
+    const double inv_dx = 1.0 / s.grid.dx;
+    const double inv_dy = 1.0 / s.grid.dy;
+
+    SimState::View2D u = s.u;
+    SimState::View2D v = s.v;
+
+    Kokkos::parallel_for("compute_u_conv_rhs",
+    Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+        {s.grid.u_i_begin(), s.grid.u_j_begin()},
+        {s.grid.u_i_end(),   s.grid.u_j_end()}),
+    KOKKOS_LAMBDA(int i, int j) {
+        const double u_east  = avg_x(u, i,   j);
+        const double u_west  = avg_x(u, i-1, j);
+        const double duudx   = (u_east*u_east - u_west*u_west) * inv_dx;
+
+        const double u_north = avg_y(u, i,   j);
+        const double u_south = avg_y(u, i,   j-1);
+        const double v_north = avg_x(v, i-1, j+1);
+        const double v_south = avg_x(v, i-1, j);
+        const double duvdy   = (u_north*v_north - u_south*v_south) * inv_dy;
+
+        rhs_u(i, j) = -duudx - duvdy;
+    });
+}
+
+void compute_u_diff_rhs(const SimState& s, double re,
+                        Kokkos::View<double**> rhs_u) {
+    const double inv_dx2 = 1.0 / (s.grid.dx * s.grid.dx);
+    const double inv_dy2 = 1.0 / (s.grid.dy * s.grid.dy);
+    const double inv_re  = 1.0 / re;
+
+    SimState::View2D u = s.u;
+
+    Kokkos::parallel_for("compute_u_diff_rhs",
+    Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+        {s.grid.u_i_begin(), s.grid.u_j_begin()},
+        {s.grid.u_i_end(),   s.grid.u_j_end()}),
+    KOKKOS_LAMBDA(int i, int j) {
+        rhs_u(i, j) = inv_re * laplacian(u, i, j, inv_dx2, inv_dy2);
+    });
+}
+
+void compute_v_conv_rhs(const SimState& s,
+                        Kokkos::View<double**> rhs_v) {
+    const double inv_dx = 1.0 / s.grid.dx;
+    const double inv_dy = 1.0 / s.grid.dy;
+
+    SimState::View2D u = s.u;
+    SimState::View2D v = s.v;
+
+    Kokkos::parallel_for("compute_v_conv_rhs",
+    Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+        {s.grid.v_i_begin(), s.grid.v_j_begin()},
+        {s.grid.v_i_end(),   s.grid.v_j_end()}),
+    KOKKOS_LAMBDA(int i, int j) {
+        const double v_north = avg_y(v, i,   j);
+        const double v_south = avg_y(v, i,   j-1);
+        const double dvvdy   = (v_north*v_north - v_south*v_south) * inv_dy;
+
+        const double v_east  = avg_x(v, i,   j);
+        const double v_west  = avg_x(v, i-1, j);
+        const double u_east  = avg_y(u, i+1, j-1);
+        const double u_west  = avg_y(u, i,   j-1);
+        const double duvdx   = (u_east*v_east - u_west*v_west) * inv_dx;
+
+        rhs_v(i, j) = -duvdx - dvvdy;
+    });
+}
+
+void compute_v_diff_rhs(const SimState& s, double re,
+                        Kokkos::View<double**> rhs_v) {
+    const double inv_dx2 = 1.0 / (s.grid.dx * s.grid.dx);
+    const double inv_dy2 = 1.0 / (s.grid.dy * s.grid.dy);
+    const double inv_re  = 1.0 / re;
+
+    SimState::View2D v = s.v;
+
+    Kokkos::parallel_for("compute_v_diff_rhs",
+    Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
+        {s.grid.v_i_begin(), s.grid.v_j_begin()},
+        {s.grid.v_i_end(),   s.grid.v_j_end()}),
+    KOKKOS_LAMBDA(int i, int j) {
+        rhs_v(i, j) = inv_re * laplacian(v, i, j, inv_dx2, inv_dy2);
+    });
+}
+
 double compute_kinetic_energy(const SimState& s){
     SimState::View2D u = s.u;
     SimState::View2D v = s.v;

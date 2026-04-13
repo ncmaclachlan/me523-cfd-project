@@ -39,16 +39,16 @@ struct Solver {
         bc.apply(state);
 
         // 2. Predict velocity (writes into u_star, v_star)
-        //integrator.predict(state, u_star, v_star, config.re, config.dt);
+        integrator.predict(state, bc, u_star, v_star, config.re, config.dt);
 
         // 3. Compute pressure Poisson RHS from divergence of u_star
-        //physics::compute_pressure_rhs(state, u_star, v_star, config.dt, rhs);
+        physics::compute_pressure_rhs(state, u_star, v_star, config.dt, rhs);
 
         // 4. Solve pressure Poisson equation (reads rhs, writes s.p)
-        //auto presult = pressure.solve(state, rhs);
+        pressure.solve(state, rhs);
 
         // 5. Correct velocity with pressure gradient
-        //physics::correct_velocity(state, u_star, v_star, config.dt);
+        physics::correct_velocity(state, u_star, v_star, config.dt);
 
         if (state.step < state.n_steps) {                                       
             state.ke_history(state.step) = physics::compute_kinetic_energy(state);                                                                                                                      

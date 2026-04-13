@@ -65,3 +65,35 @@ Grab the multigrid pressure solver branch and try to build and run tests and app
 Build failed with 10 NVCC errors: ``The enclosing parent function for an extended \texttt{\_\_host\_\_ \_\_device\_\_} lambda cannot have private or protected access within its class.'' All \texttt{KOKKOS\_LAMBDA}-containing helper methods of \texttt{PressureSolver} were in the \texttt{private:} section; NVCC cannot generate helper types for extended device lambdas in that scope. Fix: moved \texttt{Level} struct and all helper methods to \texttt{public:} in \texttt{pressure\_solver.hpp}, keeping only data members private. After pulling the remote branch (which had merged main/div-ke-correction), a second error appeared: \texttt{test\_pressure\_solver.cpp} used the old single-argument \texttt{SimState(grid)} constructor, changed to require \texttt{n\_steps} as a second argument by the div-ke-correction merge. Both call sites updated to \texttt{SimState(grid, 1)}. Build succeeded, all 4 tests passed (OutputTest, PressureSolverTest, KineticEnergyTest, L2DivergenceTest), and \texttt{ns\_solver} ran cleanly. Fixes committed to new branch \texttt{multigrid-cuda-compat} and submitted as PR \#75.
 
 \textbf{Date and Model:} Claude Sonnet 4.6, 2026-04-13
+
+\subsection*{Interaction 6}
+
+\textbf{Prompt:}
+\begin{quote}
+I was told that the Thomas algorithm is bad for GPU use since it requires serial tridiagonal sweeps. How would we modify the solver to still do Crank-Nicolson but use a GPU-friendly implicit viscous solve instead? Design and implement this on a new branch \texttt{time-integration}.
+\end{quote}
+
+\textbf{Response summary:}
+Claude designed a Crank-Nicolson integrator that replaces the serial Thomas algorithm with a Red-Black Gauss-Seidel (RBGS) iteration for the implicit viscous solve. The operator being inverted is $(I - \frac{\Delta t}{2 Re}\nabla^2)\mathbf{u}^* = \mathbf{b}$, which is SPD, so RBGS converges. Each RBGS pass is two fully parallel \texttt{Kokkos::MDRangePolicy} kernels (red cells then black cells), making it GPU-friendly. The update formula uses \texttt{physics::laplacian} for consistency with the rest of the codebase.
+
+The following changes were made across the codebase:
+
+\textbf{Split RHS functions} (\texttt{src/physics.cpp}, \texttt{include/physics.hpp}):
+Added \texttt{compute\_u\_conv\_rhs}, \texttt{compute\_u\_diff\_rhs}, \texttt{compute\_v\_conv\_rhs}, \texttt{compute\_v\_diff\_rhs} to separate convective and diffusive contributions, which Crank-Nicolson treats differently (explicit convection, semi-implicit diffusion). The original \texttt{compute\_u\_rhs} / \texttt{compute\_v\_rhs} were kept for \texttt{ForwardEuler}.
+
+\textbf{ViscousSolver} (\texttt{include/viscous\_solver.hpp}, header-only):
+New struct with \texttt{solve\_u} and \texttt{solve\_v} methods. Each iterates up to \texttt{max\_iters=50} RBGS sweeps, calling \texttt{bc.apply\_u}/\texttt{bc.apply\_v} between iterations to keep ghost cells consistent. Templated on \texttt{BC} to thread the boundary condition through the solve loop. Convergence is checked via RMS residual of $(I - \alpha\nabla^2)u^* - \text{rhs}$.
+
+\textbf{Boundary conditions refactored} (\texttt{include/boundary\_conditions.hpp}):
+Both \texttt{LidDrivenCavityBC} and \texttt{PeriodicBC} had their monolithic \texttt{apply(SimState\&)} split into separate \texttt{apply\_u(MacGrid2D\&, View)} and \texttt{apply\_v(MacGrid2D\&, View)} methods so the viscous solver can enforce BCs on scratch views during RBGS iterations without access to the full \texttt{SimState}.
+
+\textbf{Integrators refactored} (\texttt{include/integrator.hpp}):
+\texttt{ForwardEuler::predict} updated to accept a \texttt{BC} template parameter (unused, kept for interface uniformity). New \texttt{CrankThatNicolson} integrator added: assembles the explicit CN RHS ($\mathbf{u} + \Delta t\,C(\mathbf{u}) + \frac{\Delta t}{2}D(\mathbf{u})$), sets the initial guess for $\mathbf{u}^*$, then calls \texttt{ViscousSolver::solve\_u}/\texttt{solve\_v}. All member \texttt{Kokkos::View} captures in \texttt{KOKKOS\_LAMBDA} use explicit local copies with declared type \texttt{Kokkos::View<double**>} to avoid implicit \texttt{this}-pointer capture (which is invalid on device).
+
+\textbf{Solver wired up} (\texttt{include/solver.hpp}, \texttt{apps/ns\_solver.cpp}):
+\texttt{Solver} template instantiated as \texttt{Solver<PeriodicBC, CrankThatNicolson>} for the Taylor-Green vortex run.
+
+\textbf{Tests} (\texttt{tests/test\_viscous\_solver.cpp}, \texttt{tests/test\_integrators.cpp}):
+Six new tests added: zero RHS converges to zero; constant RHS with periodic BC converges to that constant (since $\nabla^2 C = 0$); \texttt{ForwardEuler} leaves a uniform field unchanged; \texttt{CrankThatNicolson} leaves a uniform field unchanged; \texttt{CrankThatNicolson} dissipates kinetic energy from a sinusoidal field at low Re. All 6 tests pass alongside the existing 4.
+
+\textbf{Date and Model:} Claude Sonnet 4.6, 2026-04-13

@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
         cfg.dt = 1e-3;
         cfg.t_end = 1.0;
 
-        Solver solver(cfg);
+        Solver<PeriodicBC, CrankThatNicolson> solver(cfg);
         solver.run();
     }
     Kokkos::finalize();
