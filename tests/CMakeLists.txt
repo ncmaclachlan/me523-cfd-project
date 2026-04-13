@@ -1,3 +1,11 @@
 add_executable(test_output test_output.cpp)
 target_link_libraries(test_output PRIVATE ns2d)
 add_test(NAME OutputTest COMMAND test_output)
+
+add_executable(test_kinetic_energy test_kinetic_energy.cpp)
+target_link_libraries(test_kinetic_energy PRIVATE ns2d)
+add_test(NAME KineticEnergyTest COMMAND test_kinetic_energy)
+
+add_executable(test_l2_divergence test_l2_divergence.cpp)
+target_link_libraries(test_l2_divergence PRIVATE ns2d)
+add_test(NAME L2DivergenceTest COMMAND test_l2_divergence)
