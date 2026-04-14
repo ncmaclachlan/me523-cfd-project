@@ -287,7 +287,36 @@ analytical form as the velocities. This transient quickly vanishes.
 % - Computational cost
 % - Compare velocity field to analytical solution for 2D Taylor-Green vortex (see HW 1)
 
-
+\begin{table}[htbp]
+\centering
+\caption{Solver performance summary for a $64\times 64$ grid at $\mathrm{CFL}=0.5$ and $t_{\mathrm{end}}=10$.}
+\label{tab:solver_summary_cfl05}
+\begin{tabular}{lccc}
+\hline
+Quantity & Re = 10 & Re = 100 & Re = 1000 \\
+\hline
+Grid & $64 \times 64$ & $64 \times 64$ & $64 \times 64$ \\
+$t_{\mathrm{end}}$ & 10 & 10 & 10 \\
+Steps & 90 & 185 & 202 \\
+Wall time (s) & 3.7437 & 5.5666 & 4.5717 \\
+Wall time/step (ms) & 41.5971 & 30.0897 & 22.6321 \\
+\hline
+$\Delta t_{\min}$ & 0.049147 & 0.049147 & 0.049147 \\
+$\Delta t_{\mathrm{mean}}$ & 0.115126 & 0.054206 & 0.049638 \\
+$\Delta t_{\max}$ & 0.362549 & 0.059980 & 0.050136 \\
+\hline
+RBGS iters min & 11 & 4 & 3 \\
+RBGS iters mean & 20.31 & 4.00 & 3.00 \\
+RBGS iters max & 53 & 4 & 3 \\
+RBGS max residual & $9.98\times 10^{-9}$ & $2.12\times 10^{-9}$ & $2.47\times 10^{-12}$ \\
+\hline
+MG v-cycles min & 4 & 4 & 3 \\
+MG v-cycles mean & 4.01 & 4.01 & 3.01 \\
+MG v-cycles max & 5 & 5 & 5 \\
+MG max residual & $6.77\times 10^{-9}$ & $6.83\times 10^{-9}$ & $6.84\times 10^{-9}$ \\
+\hline
+\end{tabular}
+\end{table}
 
 
 \subsubsection*{(f) Code}
