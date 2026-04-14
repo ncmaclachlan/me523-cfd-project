@@ -50,7 +50,7 @@ def load_divergence(directory):
     }
 
 
-def plot_kinetic_energy(ke_data, *, ax=None):
+def plot_kinetic_energy(ke_data, *, ax=None, re=None):
     """Plot kinetic energy vs time.
 
     Parameters
@@ -59,6 +59,9 @@ def plot_kinetic_energy(ke_data, *, ax=None):
         Output of :func:`load_ke`.
     ax : matplotlib.axes.Axes, optional
         Axes to plot on. Created if None.
+    re : float, optional
+        Reynolds number. When provided, overlays the theoretical decay
+        curve ``E(0) * exp(-4*t/Re)`` as a dashed line.
 
     Returns
     -------
@@ -69,9 +72,20 @@ def plot_kinetic_energy(ke_data, *, ax=None):
     else:
         fig = ax.figure
 
-    ax.plot(ke_data["time"], ke_data["kinetic_energy"], color="k")
+    t = ke_data["time"]
+    ke = ke_data["kinetic_energy"]
+
+    ax.plot(t, ke, color="k", label=r"$E$ (simulation)")
+
+    if re is not None:
+        ke0 = ke[0]
+        ke_theory = ke0 * np.exp(-4.0 * t / re)
+        ax.plot(t, ke_theory, color="k", linestyle="--",
+                label=r"$E(0)\,e^{-4t/Re}$")
+        ax.legend()
+
     ax.set_xlabel(r"$t$")
-    ax.set_ylabel(r"$E_k$")
+    ax.set_ylabel(r"$E$")
     ax.set_title("Kinetic Energy")
     ax.ticklabel_format(axis="y", style="sci", scilimits=(-2, 3))
 
