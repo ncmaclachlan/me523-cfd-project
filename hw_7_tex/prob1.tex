@@ -175,6 +175,12 @@ We define the kinetic energy of the fluid $E(t)$ by
   E(t) = \frac{1}{2} \int |\mathbf{u}|^2 \dd V \approx \frac{1}{2} \sum_i |u_i|^2 \Delta x \Delta y.
 \end{equation}
 
+Analytically, this gives us the function for kinetic energy as a function of time:
+
+\begin{equation}
+  E(t) = E(0)\ee^{-4t/Re}.
+\end{equation}
+
 Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the computed solution against the analytical decay rate. We can see that for larger Re values, the exponent is smaller and thus the decay is slower (almost linear) while for $\text{Re}=10$ we see a faster exponential decay. Moreover, we see that for all plots, the kinetic energy from the simulation agrees almost exactly with the exact value. 
 
 
@@ -190,6 +196,8 @@ Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the compute
 
 
 \subsubsection*{(d) Flow Visualization}
+
+Figure \ref{fig:velocity_magnitude} shows the contours for the velocity magnitude for three different Reynold's Numbers $Re=10, 100, 1000$. We can see that for small $Re$, the exponential decay is faster, therefore the velocity magnitude is smaller. Conversely, for large $Re$, the decay is slower, and the magnitude of the velocity field is larger. 
 
 \begin{figure}[htbp]
   \centering
@@ -209,15 +217,6 @@ Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the compute
   \label{fig:pressure}
 \end{figure}
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.6\textwidth]{images/velocity_error_re10_cfl0.5.png}\\[0.5em]
-  \includegraphics[width=0.6\textwidth]{images/velocity_error_re100_cfl0.5.png}\\[0.5em]
-  \includegraphics[width=0.6\textwidth]{images/velocity_error_re1000_cfl0.5.png}
-  \caption{Velocity error $\|\mathbf{u} - \mathbf{u}_{\mathrm{exact}}\|_2$ vs.\ time on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$ (top), $100$ (middle), and $1000$ (bottom). The analytical Taylor--Green solution decays as $e^{-2t/\mathrm{Re}}$; error grows at higher Re where velocity magnitude is highest.}
-  \label{fig:velocity_error}
-\end{figure}
-
 
 \subsubsection*{(e) Report}
 
@@ -226,6 +225,14 @@ Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the compute
 % - Solver tolerances and number of iterations
 % - Computational cost
 % - Compare velocity field to analytical solution for 2D Taylor-Green vortex (see HW 1)
+
+The analytical solution for the velocity field $(u,v)$ for this problem is given by 
+
+\begin{equation}
+  u(x,y,t) = \sin x \cos y \ee^{-2t / Re}, \quad v(x,y,t) = -\cos x \sin y \ee^{-2t/Re}.
+\end{equation}
+
+Using this, we can compute the error from the simulation. This error, plotted for $u$ and $v$ separately, can be seen in Figure \ref{fig:velocity_error}.  
 
 \begin{table}[htbp]
 \centering
@@ -257,6 +264,16 @@ MG max residual & $6.77\times 10^{-9}$ & $6.83\times 10^{-9}$ & $6.84\times 10^{
 \hline
 \end{tabular}
 \end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{images/velocity_error_re10_cfl0.5.png}\\[0.5em]
+  \includegraphics[width=0.6\textwidth]{images/velocity_error_re100_cfl0.5.png}\\[0.5em]
+  \includegraphics[width=0.6\textwidth]{images/velocity_error_re1000_cfl0.5.png}
+  \caption{Velocity error $\|\mathbf{u} - \mathbf{u}_{\mathrm{exact}}\|_2$ vs.\ time on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$ (top), $100$ (middle), and $1000$ (bottom). The analytical Taylor--Green solution decays as $e^{-2t/\mathrm{Re}}$; error grows at higher Re where velocity magnitude is highest.}
+  \label{fig:velocity_error}
+\end{figure}
+
 
 
 \subsubsection*{(f) Code}
