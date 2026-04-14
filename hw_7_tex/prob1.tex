@@ -214,8 +214,61 @@ asdf
 
 \subsubsection*{(d) Flow Visualization}
 
-% TODO: Contours or slices of velocity magnitude and pressure
+\begin{figure}[htbp]
+  \centering
+  % --- CFL = 0.2 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re10_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re100_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re1000_cfl0.2.png}
+    \caption{$\mathrm{CFL} = 0.2$: velocity magnitude $|\mathbf{u}|$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:vmag_cfl0.2}
+  \end{subfigure}
 
+  \vspace{1em}
+
+  % --- CFL = 0.5 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re10_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re100_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re1000_cfl0.5.png}
+    \caption{$\mathrm{CFL} = 0.5$: velocity magnitude $|\mathbf{u}|$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:vmag_cfl0.5}
+  \end{subfigure}
+
+  \caption{Velocity magnitude contours $|\mathbf{u}| = \sqrt{u^2+v^2}$ at $t=10$ on a $64\times64$ grid. Higher Re retains more vortex structure; lower Re shows stronger viscous dissipation.}
+  \label{fig:velocity_magnitude}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  % --- CFL = 0.2 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/pressure_re10_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/pressure_re100_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/pressure_re1000_cfl0.2.png}
+    \caption{$\mathrm{CFL} = 0.2$: pressure $p$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:pres_cfl0.2}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  % --- CFL = 0.5 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/pressure_re10_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/pressure_re100_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/pressure_re1000_cfl0.5.png}
+    \caption{$\mathrm{CFL} = 0.5$: pressure $p$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:pres_cfl0.5}
+  \end{subfigure}
+
+  \caption{Pressure contours at $t=10$ on a $64\times64$ grid. The four-fold pressure pattern reflects the two-by-two vortex arrangement of the Taylor--Green initial condition; amplitude decays with Re.}
+  \label{fig:pressure}
+\end{figure}
 
 
 
