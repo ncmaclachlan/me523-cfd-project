@@ -156,29 +156,10 @@ analytical form as the velocities. This transient quickly vanishes.
 
 \begin{figure}[htbp]
   \centering
-  % --- CFL = 0.2 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/divergence_re10_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/divergence_re100_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/divergence_re1000_cfl0.2.png}
-    \caption{$\mathrm{CFL} = 0.2$: divergence norm vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:div_cfl0.2}
-  \end{subfigure}
-
-  \vspace{1em}
-
-  % --- CFL = 0.5 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/divergence_re10_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/divergence_re100_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/divergence_re1000_cfl0.5.png}
-    \caption{$\mathrm{CFL} = 0.5$: divergence norm vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:div_cfl0.5}
-  \end{subfigure}
-
-  \caption{Incompressibility verification: $\ell^2$-norm of the discrete divergence $\|\nabla\cdot\mathbf{u}\|_2$ vs.\ time on a $64\times64$ grid.}
+  \includegraphics[width=0.32\textwidth]{images/divergence_re10_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/divergence_re100_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/divergence_re1000_cfl0.5.png}
+  \caption{Incompressibility verification: $\ell^2$-norm of the discrete divergence $\|\nabla\cdot\mathbf{u}\|_2$ vs.\ time on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
   \label{fig:divergence}
 \end{figure}
 
@@ -200,29 +181,10 @@ Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the compute
 
 \begin{figure}[htbp]
   \centering
-  % --- CFL = 0.2 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re10_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re100_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re1000_cfl0.2.png}
-    \caption{$\mathrm{CFL} = 0.2$: kinetic energy $E(t)$ vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:ke_cfl0.2}
-  \end{subfigure}
-
-  \vspace{1em}
-
-  % --- CFL = 0.5 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re10_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re100_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re1000_cfl0.5.png}
-    \caption{$\mathrm{CFL} = 0.5$: kinetic energy $E(t)$ vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:ke_cfl0.5}
-  \end{subfigure}
-
-  \caption{Kinetic energy decay $E(t) = \frac{1}{2}\int|\mathbf{u}|^2\,\mathrm{d}V$ for the Taylor--Green vortex on a $64\times64$ grid. Dashed lines show the analytical decay $E_0\,e^{-4t/\mathrm{Re}}$.}
+  \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re10_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re100_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re1000_cfl0.5.png}
+  \caption{Kinetic energy decay $E(t) = \frac{1}{2}\int|\mathbf{u}|^2\,\mathrm{d}V$ for the Taylor--Green vortex on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right). Dashed lines show the analytical decay $E_0\,e^{-4t/\mathrm{Re}}$.}
   \label{fig:kinetic_energy}
 \end{figure}
 
@@ -231,83 +193,28 @@ Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the compute
 
 \begin{figure}[htbp]
   \centering
-  % --- CFL = 0.2 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re10_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re100_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re1000_cfl0.2.png}
-    \caption{$\mathrm{CFL} = 0.2$: velocity magnitude $|\mathbf{u}|$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:vmag_cfl0.2}
-  \end{subfigure}
-
-  \vspace{1em}
-
-  % --- CFL = 0.5 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re10_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re100_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re1000_cfl0.5.png}
-    \caption{$\mathrm{CFL} = 0.5$: velocity magnitude $|\mathbf{u}|$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:vmag_cfl0.5}
-  \end{subfigure}
-
-  \caption{Velocity magnitude contours $|\mathbf{u}| = \sqrt{u^2+v^2}$ at $t=10$ on a $64\times64$ grid. Higher Re retains more vortex structure; lower Re shows stronger viscous dissipation.}
+  \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re10_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re100_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/velocity_magnitude_re1000_cfl0.5.png}
+  \caption{Velocity magnitude contours $|\mathbf{u}| = \sqrt{u^2+v^2}$ at $t=10$ on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right). Higher Re retains more vortex structure; lower Re shows stronger viscous dissipation.}
   \label{fig:velocity_magnitude}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  % --- CFL = 0.2 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/pressure_re10_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/pressure_re100_cfl0.2.png}
-    \includegraphics[width=0.32\textwidth]{images/pressure_re1000_cfl0.2.png}
-    \caption{$\mathrm{CFL} = 0.2$: pressure $p$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:pres_cfl0.2}
-  \end{subfigure}
-
-  \vspace{1em}
-
-  % --- CFL = 0.5 row ---
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=0.32\textwidth]{images/pressure_re10_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/pressure_re100_cfl0.5.png}
-    \includegraphics[width=0.32\textwidth]{images/pressure_re1000_cfl0.5.png}
-    \caption{$\mathrm{CFL} = 0.5$: pressure $p$ at $t=10$ for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
-    \label{fig:pres_cfl0.5}
-  \end{subfigure}
-
-  \caption{Pressure contours at $t=10$ on a $64\times64$ grid. The four-fold pressure pattern reflects the two-by-two vortex arrangement of the Taylor--Green initial condition; amplitude decays with Re.}
+  \includegraphics[width=0.32\textwidth]{images/pressure_re10_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/pressure_re100_cfl0.5.png}
+  \includegraphics[width=0.32\textwidth]{images/pressure_re1000_cfl0.5.png}
+  \caption{Pressure contours at $t=10$ on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right). The four-fold pressure pattern reflects the two-by-two vortex arrangement of the Taylor--Green initial condition; amplitude decays with Re.}
   \label{fig:pressure}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  % --- CFL = 0.2 column ---
-  \begin{subfigure}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/velocity_error_re10_cfl0.2.png}\\[0.5em]
-    \includegraphics[width=\textwidth]{images/velocity_error_re100_cfl0.2.png}\\[0.5em]
-    \includegraphics[width=\textwidth]{images/velocity_error_re1000_cfl0.2.png}
-    \caption{$\mathrm{CFL} = 0.2$: $\mathrm{Re} = 10$ (top), $100$ (middle), $1000$ (bottom).}
-    \label{fig:verr_cfl0.2}
-  \end{subfigure}
-  \hfill
-  % --- CFL = 0.5 column ---
-  \begin{subfigure}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/velocity_error_re10_cfl0.5.png}\\[0.5em]
-    \includegraphics[width=\textwidth]{images/velocity_error_re100_cfl0.5.png}\\[0.5em]
-    \includegraphics[width=\textwidth]{images/velocity_error_re1000_cfl0.5.png}
-    \caption{$\mathrm{CFL} = 0.5$: $\mathrm{Re} = 10$ (top), $100$ (middle), $1000$ (bottom).}
-    \label{fig:verr_cfl0.5}
-  \end{subfigure}
-
-  \caption{Velocity error $\|\mathbf{u} - \mathbf{u}_{\mathrm{exact}}\|_2$ vs.\ time on a $64\times64$ grid. The analytical Taylor--Green solution decays as $e^{-2t/\mathrm{Re}}$; error grows at higher Re where convective nonlinearity matters more.}
+  \includegraphics[width=0.6\textwidth]{images/velocity_error_re10_cfl0.5.png}\\[0.5em]
+  \includegraphics[width=0.6\textwidth]{images/velocity_error_re100_cfl0.5.png}\\[0.5em]
+  \includegraphics[width=0.6\textwidth]{images/velocity_error_re1000_cfl0.5.png}
+  \caption{Velocity error $\|\mathbf{u} - \mathbf{u}_{\mathrm{exact}}\|_2$ vs.\ time on a $64\times64$ grid, $\mathrm{CFL} = 0.5$, for $\mathrm{Re} = 10$ (top), $100$ (middle), and $1000$ (bottom). The analytical Taylor--Green solution decays as $e^{-2t/\mathrm{Re}}$; error grows at higher Re where velocity magnitude is highest.}
   \label{fig:velocity_error}
 \end{figure}
 
