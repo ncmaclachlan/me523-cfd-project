@@ -141,7 +141,7 @@ The time integration treats convection explicitly and uses a Crank Nicolson aver
 
 To do this linear solve, since we want to be able to run this in parallel systems we use a red-black Gauss-Seidel scheme. In such a scheme, the domain is split into black and red cells in a checkerboard pattern. Notice that all red cells depend only on black cells to compute the Laplacian and similarly all black cells depend only on the red cells. Therefore, in each iteration we do a red cell sweep followed by a black cell sweep, where only the red and black cells are updated respectively. With an access pattern like this, we ensure that parallel execution of kernels does not affect the result of the computation. The iterations are repeated, reapplying boundary conditions, until we achieve a desired tolerance or reach a maximum number of iterations. Using this Crank-Nicolson scheme ensures second-order accuracy in time and unconditional stability with respect to the viscous CFL constraint. 
 
-
+In the pressure solver during the projection step, we use a geometric multigrid solver to solve the linear system obtained from the Poisson equation. For each level, we use Red Black Gauss Seidel as mentioned previously. Then grids are coarsened until we get a $2 \times 2$ grid, after which the data is moved back to a fine grid using bilinear interpolation. Then Gauss Seidel is ran once more, completing a v-cycle in the solver. We stop once a desired tolerance is achieved. 
 
 
 
