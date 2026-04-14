@@ -69,11 +69,13 @@ struct PeriodicBC {
                 u(g.u_i_end() - 1,   j) = avg;
             });
 
+        // Ghost must skip past the duplicate periodic face (u_i_end()-1 == u_i_begin()
+        // after sync) to the last truly independent face at u_i_end()-2.
         Kokkos::parallel_for("periodic_u_x",
             Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
             KOKKOS_LAMBDA(const int j) {
-                u(g.u_i_begin() - 1, j) = u(g.u_i_end() - 1, j);
-                u(g.u_i_end(),       j) = u(g.u_i_begin(),   j);
+                u(g.u_i_begin() - 1, j) = u(g.u_i_end() - 2, j);
+                u(g.u_i_end(),       j) = u(g.u_i_begin() + 1, j);
             });
 
         Kokkos::parallel_for("periodic_u_y",
@@ -86,10 +88,10 @@ struct PeriodicBC {
         Kokkos::parallel_for("periodic_u_corners",
             Kokkos::RangePolicy<>(0, 1),
             KOKKOS_LAMBDA(const int) {
-                u(g.u_i_begin() - 1, g.u_j_begin() - 1) = u(g.u_i_end() - 1, g.u_j_end() - 1);
-                u(g.u_i_begin() - 1, g.u_j_end())       = u(g.u_i_end() - 1, g.u_j_begin());
-                u(g.u_i_end(),       g.u_j_begin() - 1) = u(g.u_i_begin(),   g.u_j_end() - 1);
-                u(g.u_i_end(),       g.u_j_end())       = u(g.u_i_begin(),   g.u_j_begin());
+                u(g.u_i_begin() - 1, g.u_j_begin() - 1) = u(g.u_i_end() - 2, g.u_j_end() - 1);
+                u(g.u_i_begin() - 1, g.u_j_end())       = u(g.u_i_end() - 2, g.u_j_begin());
+                u(g.u_i_end(),       g.u_j_begin() - 1) = u(g.u_i_begin() + 1, g.u_j_end() - 1);
+                u(g.u_i_end(),       g.u_j_end())       = u(g.u_i_begin() + 1, g.u_j_begin());
             });
     }
 
@@ -111,20 +113,21 @@ struct PeriodicBC {
                 v(g.v_i_end(),       j) = v(g.v_i_begin(),   j);
             });
 
+        // Same duplicate-face issue as u in x: v_j_end()-1 == v_j_begin() after sync.
         Kokkos::parallel_for("periodic_v_y",
             Kokkos::RangePolicy<>(g.v_i_begin(), g.v_i_end()),
             KOKKOS_LAMBDA(const int i) {
-                v(i, g.v_j_begin() - 1) = v(i, g.v_j_end() - 1);
-                v(i, g.v_j_end())       = v(i, g.v_j_begin());
+                v(i, g.v_j_begin() - 1) = v(i, g.v_j_end() - 2);
+                v(i, g.v_j_end())       = v(i, g.v_j_begin() + 1);
             });
 
         Kokkos::parallel_for("periodic_v_corners",
             Kokkos::RangePolicy<>(0, 1),
             KOKKOS_LAMBDA(const int) {
-                v(g.v_i_begin() - 1, g.v_j_begin() - 1) = v(g.v_i_end() - 1, g.v_j_end() - 1);
-                v(g.v_i_begin() - 1, g.v_j_end())       = v(g.v_i_end() - 1, g.v_j_begin());
-                v(g.v_i_end(),       g.v_j_begin() - 1) = v(g.v_i_begin(),   g.v_j_end() - 1);
-                v(g.v_i_end(),       g.v_j_end())       = v(g.v_i_begin(),   g.v_j_begin());
+                v(g.v_i_begin() - 1, g.v_j_begin() - 1) = v(g.v_i_end() - 1, g.v_j_end() - 2);
+                v(g.v_i_begin() - 1, g.v_j_end())       = v(g.v_i_end() - 1, g.v_j_begin() + 1);
+                v(g.v_i_end(),       g.v_j_begin() - 1) = v(g.v_i_begin(),   g.v_j_end() - 2);
+                v(g.v_i_end(),       g.v_j_end())       = v(g.v_i_begin(),   g.v_j_begin() + 1);
             });
     }
 

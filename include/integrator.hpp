@@ -76,6 +76,9 @@ struct CrankThatNicolson {
 
     ViscousSolver viscous_solver;
 
+    mutable ViscousSolveResult last_u_result{0, 0.0};
+    mutable ViscousSolveResult last_v_result{0, 0.0};
+
     template<typename BC>
     void predict(const SimState& s, const BC& bc,
                  Kokkos::View<double**> u_star,
@@ -130,7 +133,7 @@ struct CrankThatNicolson {
         Kokkos::deep_copy(v_star, s.v);
 
         // Implicit diffusion solve
-        viscous_solver.solve_u(s, bc, u_star, rhs_u, re, dt);
-        viscous_solver.solve_v(s, bc, v_star, rhs_v, re, dt);
+        last_u_result = viscous_solver.solve_u(s, bc, u_star, rhs_u, re, dt);
+        last_v_result = viscous_solver.solve_v(s, bc, v_star, rhs_v, re, dt);
     }
 };
