@@ -145,7 +145,14 @@ To do this linear solve, since we want to be able to run this in parallel system
 
 % TODO: Plot either the max or L2 norm of divergence vs time
 
-asdf
+We plotted the root mean squared to make analysis independent of grid size for use in mesh refinement studies in the future.
+This is the same the L2 norm variant suggested in previous homeworks. Our iterative solvers both use a tolerance of \lstinline{1e-8},
+we thus expect the divergence to be of a similar order. We found that for CFL constraint values we chose and the Reynolds numbers we used
+that the divergence was well below this. This may reflect the fact that the iterative methods can overshoot their tolerances. Interestingly in one 
+case we saw a late rise in the divergence still well below the tolerance. We do not as yet have an explanation for this although 
+since it is below tolerance it seems unlikely to be problematic. It may relate to the convergence of the red black scheme for the viscous term.
+Lastly, note the initial value of the divergence is higher, but drops off. This is because we didn't initialize the pressure field with the same
+analytical form as the velocities. This transient quickly vanishes.
 
 \begin{figure}[htbp]
   \centering
