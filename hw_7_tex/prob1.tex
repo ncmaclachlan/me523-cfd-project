@@ -126,14 +126,44 @@ Simulate until $t = 10$.
 % - Structure of the Helmholtz solver
 % - Linear solvers used
 
-\textbf{Solution:}
+In this numerical method, we use both a cell-center grid for pressure $p$ and a cell-face grid for the velocities $u,v$. Therefore we approximate the convective terms according to Eqs. \eqref{eq:conv_x} \& \eqref{eq:conv_y} and the viscous diffusive terms according to Eqs. \eqref{eq:visc_x} \& \eqref{eq:visc_y}.
+
+
 
 
 \subsubsection*{(b) Incompressibility Verification}
 
 % TODO: Plot either the max or L2 norm of divergence vs time
 
-\textbf{Solution:}
+
+
+\begin{figure}[htbp]
+  \centering
+  % --- CFL = 0.2 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/divergence_re10_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/divergence_re100_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/divergence_re1000_cfl0.2.png}
+    \caption{$\mathrm{CFL} = 0.2$: divergence norm vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:div_cfl0.2}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  % --- CFL = 0.5 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/divergence_re10_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/divergence_re100_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/divergence_re1000_cfl0.5.png}
+    \caption{$\mathrm{CFL} = 0.5$: divergence norm vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:div_cfl0.5}
+  \end{subfigure}
+
+  \caption{Incompressibility verification: $\ell^2$-norm of the discrete divergence $\|\nabla\cdot\mathbf{u}\|_2$ vs.\ time on a $64\times64$ grid.}
+  \label{fig:divergence}
+\end{figure}
 
 
 \subsubsection*{(c) Kinetic Energy}
@@ -141,14 +171,42 @@ Simulate until $t = 10$.
 % TODO: Compute and plot kinetic energy E(t) = 1/2 int |u|^2 dV
 % Compare with expected decay behavior (analytic solution from HW1)
 
-\textbf{Solution:}
+
+
+\begin{figure}[htbp]
+  \centering
+  % --- CFL = 0.2 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re10_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re100_cfl0.2.png}
+    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re1000_cfl0.2.png}
+    \caption{$\mathrm{CFL} = 0.2$: kinetic energy $E(t)$ vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:ke_cfl0.2}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  % --- CFL = 0.5 row ---
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re10_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re100_cfl0.5.png}
+    \includegraphics[width=0.32\textwidth]{images/kinetic_energy_re1000_cfl0.5.png}
+    \caption{$\mathrm{CFL} = 0.5$: kinetic energy $E(t)$ vs.\ time for $\mathrm{Re} = 10$, $100$, and $1000$ (left to right).}
+    \label{fig:ke_cfl0.5}
+  \end{subfigure}
+
+  \caption{Kinetic energy decay $E(t) = \frac{1}{2}\int|\mathbf{u}|^2\,\mathrm{d}V$ for the Taylor--Green vortex on a $64\times64$ grid. Dashed lines show the analytical decay $E_0\,e^{-4t/\mathrm{Re}}$.}
+  \label{fig:kinetic_energy}
+\end{figure}
 
 
 \subsubsection*{(d) Flow Visualization}
 
 % TODO: Contours or slices of velocity magnitude and pressure
 
-\textbf{Solution:}
+
 
 
 \subsubsection*{(e) Report}
@@ -159,7 +217,7 @@ Simulate until $t = 10$.
 % - Computational cost
 % - Compare velocity field to analytical solution for 2D Taylor-Green vortex (see HW 1)
 
-\textbf{Solution:}
+
 
 
 \subsubsection*{(f) Code}
