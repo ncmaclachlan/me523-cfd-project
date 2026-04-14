@@ -188,6 +188,14 @@ analytical form as the velocities. This transient quickly vanishes.
 % TODO: Compute and plot kinetic energy E(t) = 1/2 int |u|^2 dV
 % Compare with expected decay behavior (analytic solution from HW1)
 
+We define the kinetic energy of the fluid $E(t)$ by 
+
+\begin{equation}
+  E(t) = \frac{1}{2} \int |\mathbf{u}|^2 \dd V \approx \frac{1}{2} \sum_i |u_i|^2 \Delta x \Delta y.
+\end{equation}
+
+Figure \ref{fig:kinetic_energy} shows the decay of kinetic energy of the computed solution against the analytical decay rate. We can see that for larger Re values, the exponent is smaller and thus the decay is slower (almost linear) while for $\text{Re}=10$ we see a faster exponential decay. Moreover, we see that for all plots, the kinetic energy from the simulation agrees almost exactly with the exact value. 
+
 
 
 \begin{figure}[htbp]
@@ -277,6 +285,31 @@ analytical form as the velocities. This transient quickly vanishes.
   \label{fig:pressure}
 \end{figure}
 
+\begin{figure}[htbp]
+  \centering
+  % --- CFL = 0.2 column ---
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/velocity_error_re10_cfl0.2.png}\\[0.5em]
+    \includegraphics[width=\textwidth]{images/velocity_error_re100_cfl0.2.png}\\[0.5em]
+    \includegraphics[width=\textwidth]{images/velocity_error_re1000_cfl0.2.png}
+    \caption{$\mathrm{CFL} = 0.2$: $\mathrm{Re} = 10$ (top), $100$ (middle), $1000$ (bottom).}
+    \label{fig:verr_cfl0.2}
+  \end{subfigure}
+  \hfill
+  % --- CFL = 0.5 column ---
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/velocity_error_re10_cfl0.5.png}\\[0.5em]
+    \includegraphics[width=\textwidth]{images/velocity_error_re100_cfl0.5.png}\\[0.5em]
+    \includegraphics[width=\textwidth]{images/velocity_error_re1000_cfl0.5.png}
+    \caption{$\mathrm{CFL} = 0.5$: $\mathrm{Re} = 10$ (top), $100$ (middle), $1000$ (bottom).}
+    \label{fig:verr_cfl0.5}
+  \end{subfigure}
+
+  \caption{Velocity error $\|\mathbf{u} - \mathbf{u}_{\mathrm{exact}}\|_2$ vs.\ time on a $64\times64$ grid. The analytical Taylor--Green solution decays as $e^{-2t/\mathrm{Re}}$; error grows at higher Re where convective nonlinearity matters more.}
+  \label{fig:velocity_error}
+\end{figure}
 
 
 \subsubsection*{(e) Report}
