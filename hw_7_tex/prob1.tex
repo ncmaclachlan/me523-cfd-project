@@ -2,9 +2,9 @@
 \subsection*{Team Contributions}
 We collaborated back and forth and between pull requests we made sure everything functioned well across both our machines. 
 This led to not having a strict boundary between components implemented by each of us. That being said the core components we worked on are divided
-in a more divided way are as follows.
-Horacio Moreno Monta\~nes: \lstinline{initial_conditions, multigrid, pressure_solver, output, plotting}
-Neil MacLachlan: \lstinline{physics, integrator, viscous_solver, boundary_conditions, grid, spack}
+in a more divided way are as follows. \newline
+\textbf{Horacio Moreno Monta\~nes:} \lstinline{initial_conditions, multigrid, pressure_solver, output, plotting} \newline
+\textbf{Neil MacLachlan:} \lstinline{physics, integrator, viscous_solver, boundary_conditions, grid, spack}
 \section*{Problem 1: 2D Navier--Stokes Solver for the Taylor--Green Vortex}
 
 In this assignment, you will extend your pressure projection solver to a full incompressible Navier--Stokes solver in two dimensions. You will simulate the decay of the \emph{Taylor--Green vortex}, a canonical benchmark for transitional and decaying turbulence.
@@ -152,11 +152,8 @@ In the pressure solver during the projection step, we use a geometric multigrid 
 
 We plotted the root mean squared to make analysis independent of grid size for use in mesh refinement studies in the future.
 This is the same the L2 norm variant suggested in previous homeworks. Our iterative solvers both use a tolerance of \lstinline{1e-8},
-we thus expect the divergence to be of a similar order. We found that for CFL constraint values we chose and the Reynolds numbers we used
-that the divergence was well below this. This may reflect the fact that the iterative methods can overshoot their tolerances. Interestingly in one 
-case we saw a late rise in the divergence still well below the tolerance. We do not as yet have an explanation for this although 
-since it is below tolerance it seems unlikely to be problematic. It may relate to the convergence of the red black scheme for the viscous term.
-Lastly, note the initial value of the divergence is higher, but drops off. This is because we didn't initialize the pressure field with the same
+we thus expect the divergence to be of a similar order. We found that the divergence was well below this. This may reflect the fact that the
+iterative methods can overshoot their tolerances. Lastly, note the initial value of the divergence is higher, but drops off. This is because we didn't initialize the pressure field with the same
 analytical form as the velocities. This transient quickly vanishes.
 
 \begin{figure}[htbp]
