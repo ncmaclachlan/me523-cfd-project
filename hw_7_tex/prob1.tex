@@ -128,6 +128,16 @@ Simulate until $t = 10$.
 
 In this numerical method, we use both a cell-center grid for pressure $p$ and a cell-face grid for the velocities $u,v$. Therefore we approximate the convective terms according to Eqs. \eqref{eq:conv_x} \& \eqref{eq:conv_y} and the viscous diffusive terms according to Eqs. \eqref{eq:visc_x} \& \eqref{eq:visc_y}.
 
+The time integration treats convection explicitly and uses a Crank Nicolson average for the diffusive term, therefore we have implicit diffusion, as shown in Eqs. \eqref{eq:adi_x} \& \eqref{eq:adi_y}. The explicit terms are computed directly as $\mathbf{rhs}$. Then the intermediate velocity $\mathbf{u}^\star$ is computed by solving the system 
+
+\begin{equation}
+  \left ( 1 - \frac{\Delta t}{2 \text{Re}} \nabla^2 \right ) \mathbf{u}^\star = \mathbf{rhs}.
+\end{equation}
+
+To do this linear solve, since we want to be able to run this in parallel systems we use a red-black Gauss-Seidel scheme. In such a scheme, the domain is split into black and red cells in a checkerboard pattern. Notice that all red cells depend only on black cells to compute the Laplacian and similarly all black cells depend only on the red cells. Therefore, in each iteration we do a red cell sweep followed by a black cell sweep, where only the red and black cells are updated respectively. With an access pattern like this, we ensure that parallel execution of kernels does not affect the result of the computation. The iterations are repeated, reapplying boundary conditions, until we achieve a desired tolerance or reach a maximum number of iterations. Using this Crank-Nicolson scheme ensures second-order accuracy in time and unconditional stability with respect to the viscous CFL constraint. 
+
+
+
 
 
 
@@ -135,7 +145,7 @@ In this numerical method, we use both a cell-center grid for pressure $p$ and a 
 
 % TODO: Plot either the max or L2 norm of divergence vs time
 
-
+asdf
 
 \begin{figure}[htbp]
   \centering

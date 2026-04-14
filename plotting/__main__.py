@@ -12,9 +12,11 @@ from . import (
     load_ke,
     load_divergence,
     load_error_norms,
+    load_timestep,
     plot_kinetic_energy,
     plot_divergence,
     plot_error_norms,
+    plot_timestep,
 )
 
 
@@ -22,7 +24,7 @@ def _parse_run_info(run_dir):
     """Extract grid size, Re, and CFL/dt from run directory name.
 
     Expected format: run_{nx}_{ny}_{Re}_cfl{cfl}  (or _dt{dt} for fixed-dt runs)
-    Returns (title_suffix, re_value) where re_value is a float or None.
+    Returns (title_suffix, re_value, nx_value, cfl_value).
     """
     basename = os.path.basename(os.path.normpath(run_dir))
     m_cfl = re.match(r"run_(\d+)_(\d+)_([\d.]+)_cfl([\d.]+)", basename)
@@ -30,18 +32,18 @@ def _parse_run_info(run_dir):
     if m_cfl:
         nx, ny, re_num, cfl = m_cfl.group(1), m_cfl.group(2), m_cfl.group(3), m_cfl.group(4)
         suffix = rf" (${nx}\times{ny}$, $Re={re_num}$, $\mathrm{{CFL}}={cfl}$)"
-        return suffix, float(re_num)
+        return suffix, float(re_num), int(nx), float(cfl)
     if m_dt:
         nx, ny, re_num, dt = m_dt.group(1), m_dt.group(2), m_dt.group(3), m_dt.group(4)
         suffix = rf" (${nx}\times{ny}$, $Re={re_num}$, $\Delta t={dt}$)"
-        return suffix, float(re_num)
+        return suffix, float(re_num), int(nx), None
     # Fallback: old format run_{nx}_{ny}_{Re}_{dt} (no cfl/dt label)
     m = re.match(r"run_(\d+)_(\d+)_([\d.]+)", basename)
     if m:
         nx, ny, re_num = m.group(1), m.group(2), m.group(3)
         suffix = rf" (${nx}\times{ny}$, $Re={re_num}$)"
-        return suffix, float(re_num)
-    return "", None
+        return suffix, float(re_num), int(nx), None
+    return "", None, None, None
 
 
 def _append_title(ax, suffix):
@@ -65,7 +67,7 @@ def main():
     figures_dir = os.path.join(args.run_dir, "figures")
     os.makedirs(figures_dir, exist_ok=True)
 
-    suffix, re_val = _parse_run_info(args.run_dir)
+    suffix, re_val, nx_val, cfl_val = _parse_run_info(args.run_dir)
 
     data = load_snapshot(output_dir)
 
@@ -94,6 +96,13 @@ def main():
     fig, ax = plot_divergence(div_data)
     _append_title(ax, suffix)
     fig.savefig(os.path.join(figures_dir, f"divergence.{args.format}"))
+
+    import math
+    ts_data = load_timestep(output_dir)
+    lx = 2.0 * math.pi  # domain length
+    fig, ax = plot_timestep(ts_data, cfl=cfl_val, nx=nx_val, lx=lx)
+    _append_title(ax, suffix)
+    fig.savefig(os.path.join(figures_dir, f"timestep.{args.format}"))
 
     error_csv = os.path.join(output_dir, "output_error.csv")
     if os.path.isfile(error_csv):

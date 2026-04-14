@@ -7,9 +7,11 @@ from .diagnostics import (
     load_ke,
     load_divergence,
     load_error_norms,
+    load_timestep,
     plot_kinetic_energy,
     plot_divergence,
     plot_error_norms,
+    plot_timestep,
     plot_diagnostics,
 )
 
@@ -23,6 +25,8 @@ __all__ = [
     "load_error_norms",
     "plot_kinetic_energy",
     "plot_divergence",
+    "load_timestep",
     "plot_error_norms",
+    "plot_timestep",
     "plot_diagnostics",
 ]
