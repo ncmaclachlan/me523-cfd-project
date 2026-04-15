@@ -1,0 +1,187 @@
+\documentclass[12pt]{article}
+
+\usepackage{amssymb,amsthm,enumitem, mathtools}
+\usepackage{placeins}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[mathscr]{euscript}
+\graphicspath{ {./images/} }
+\usepackage[margin=0.75in]{geometry}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage[export]{adjustbox}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\sisetup{
+  exponent-mode = scientific, % force scientific notation when needed
+  exponent-base = 10,
+  exponent-product = \times
+  % IMPORTANT: do not set output-exponent-marker here
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Horacio Moreno Monta\~nes and Neil MacLachlan}
+\rhead{ME 523}
+\rfoot{Page \thepage}
+\setlength{\headheight}{15pt}
+
+% theorems
+\usepackage{thmtools}
+\usepackage[framemethod=TikZ]{mdframed}
+\mdfsetup{skipabove=1em,skipbelow=0em, innertopmargin=5pt, innerbottommargin=6pt}
+
+\theoremstyle{definition}
+
+\makeatletter
+
+\declaretheoremstyle[headfont=\bfseries\sffamily, bodyfont=\normalfont, mdframed={ nobreak } ]{thmgreenbox}
+\declaretheoremstyle[headfont=\bfseries\sffamily, bodyfont=\normalfont, mdframed={ nobreak } ]{thmredbox}
+\declaretheoremstyle[headfont=\bfseries\sffamily, bodyfont=\normalfont]{thmbluebox}
+\declaretheoremstyle[headfont=\bfseries\sffamily, bodyfont=\normalfont]{thmblueline}
+\declaretheoremstyle[headfont=\bfseries\sffamily, bodyfont=\normalfont, numbered=no, mdframed={ rightline=false, topline=false, bottomline=false, }, qed=\qedsymbol ]{thmproofbox}
+\declaretheoremstyle[headfont=\bfseries\sffamily, bodyfont=\normalfont, numbered=no, mdframed={ nobreak, rightline=false, topline=false, bottomline=false } ]{thmexplanationbox}
+
+
+\declaretheorem[numberwithin=section, style=thmgreenbox, name=Definition]{definition}
+\declaretheorem[sibling=definition, style=thmredbox, name=Corollary]{corollary}
+\declaretheorem[sibling=definition, style=thmredbox, name=Proposition]{prop}
+\declaretheorem[sibling=definition, style=thmredbox, name=Theorem, numbered=no]{theorem}
+\declaretheorem[sibling=definition, style=thmredbox, name=Lemma, numbered=no]{lemma}
+
+
+
+\declaretheorem[numbered=no, style=thmexplanationbox, name=Proof]{explanation}
+\declaretheorem[numbered=no, style=thmproofbox, name=Proof]{replacementproof}
+\declaretheorem[style=thmbluebox,  numbered=no, name=Exercise]{ex}
+\declaretheorem[style=thmbluebox,  numbered=no, name=Example]{eg}
+\declaretheorem[style=thmblueline, numbered=no, name=Remark]{remark}
+\declaretheorem[style=thmblueline, numbered=no, name=Note]{note}
+\declaretheorem[style=thmblueline, numbered=no, name=Recall]{recall}
+
+\renewenvironment{proof}[1][\proofname]{\begin{replacementproof}}{\end{replacementproof}}
+
+
+
+\AtEndEnvironment{eg}{\null\hfill$\diamond$}%
+
+\newtheorem*{uovt}{UOVT}
+\newtheorem*{notation}{Notation}
+\newtheorem*{previouslyseen}{As previously seen}
+\newtheorem*{problem}{Problem}
+\newtheorem*{observe}{Observe}
+\newtheorem*{property}{Property}
+\newtheorem*{intuition}{Intuition}
+
+
+% You can make short-forms for commands you want to use often.
+% Here is an example that makes the integer Z symbol.
+% In the text you just write '\ZZ' and it will make the symbol.\
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\KK}{\mathbb{K}}
+\newcommand{\TT}{\mathscr{T}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\UU}{\mathscr{U}}
+\newcommand{\OO}{\mathscr{O}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\DD}{\mathcal{D}}
+\newcommand{\FF}{\mathcal{F}}
+\newcommand{\BB}{\mathcal{B}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\mAA}{\mathcal{A}}
+\newcommand{\Si}{\mathrm{Si}}
+\newcommand{\Ai}{\mathrm{Ai}}
+\newcommand{\Bi}{\mathrm{Bi}}
+\newcommand{\Erf}{\mathrm{Erf}}
+\newcommand{\erf}{\mathrm{erf}}
+\newcommand{\im}{\textrm{im}}
+\newcommand{\inv}[1]{#1^{-1}}
+\newcommand{\cyclic}[1]{\ < \negmedspace #1 \negmedspace > \ }  
+\newcommand{\rad}[1]{\textrm{rad($#1$)}}
+\newcommand{\st}{\text{ s.t. }}
+\newcommand*{\QED}{\null\nobreak\hfill\ensuremath{\square}}%
+\renewcommand{\leq }{\leqslant}
+\renewcommand{\geq}{\geqslant}
+%\renewcommand{\phi}{\varphi}
+\renewcommand{\epsilon}{\varepsilon}
+
+\newcommand*\tageq{\refstepcounter{equation}\tag{\theequation}}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\ee}{\mathrm{e}}
+\newcommand{\ii}{\mathrm{i}}
+
+\newcommand*\oline[1]{%
+  \vbox{%
+    \hrule height 0.5pt%                  % Line above with certain width
+    \kern0.25ex%                          % Distance between line and content
+    \hbox{%
+      \kern-0.1em%                        % Distance between content and left side of box, negative values for lines shorter than content
+      \ifmmode#1\else\ensuremath{#1}\fi%  % The content, typeset in dependence of mode
+      \kern-0.1em%                        % Distance between content and left side of box, negative values for lines shorter than content
+    }% end of hbox
+  }% end of vbox
+}
+
+\newenvironment{sysmatrix}[1]
+ {\left[\begin{array}{@{}#1@{}}}
+ {\end{array}\right]}
+\newcommand{\ro}[1]{%
+  \xrightarrow{\mathmakebox[\rowidth]{#1}}%
+}
+\newlength{\rowidth}% row operation width
+\AtBeginDocument{\setlength{\rowidth}{3em}}
+%\setlength{\parindent}{0pt} 
+
+\newcommand{\Res}[2]{\text{Res} \left ( #1 ; z = #2 \right)}
+\newcommand{\Resw}[2]{\text{Res} \left ( #1 ; w = #2 \right)}
+
+\usepackage{xifthen}
+
+\def\testdateparts#1{\dateparts#1\relax}
+\def\dateparts#1 #2 #3 #4 #5\relax{
+    \marginpar{\small\textsf{\mbox{#1 #2 #3 #5}}}
+}
+
+\def\@lesson{}%
+\newcommand{\lesson}[2]{%
+    \def\@lesson{Lecture #1 (#2)}%
+    \subsection*{\@lesson}%
+}
+
+\newcommand\mymaketitle{%
+  \begin{titlepage}
+    \null\vfil\vskip 40\p@
+    \begin{center}
+      {\LARGE \@title \par}
+      \vskip 2.5em
+      {\large \lineskip .75em \@author \par}
+      \vskip 1.5em
+      {\large \@date \par}
+    \end{center}\par
+    \@thanks
+    \vfil\null
+  \end{titlepage}
+}
+
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{codegreen},
+    stringstyle=\color{codepurple},
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    showstringspaces=false
+}

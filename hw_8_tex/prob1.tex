@@ -1,0 +1,37 @@
+%!TEX root = hw_8.tex
+
+\section*{Final Project Proposal}
+
+\subsection*{Team}
+
+\noindent \textbf{Team Name:} Crank That Nicholson
+
+\noindent \textbf{Members:} Horacio Moreno Monta\~nes and Neil MacLachlan
+
+\subsection*{Project Title}
+\textbf{Toward National-Lab-Style CFD Software: A Performance-Portable Kokkos Navier--Stokes Framework with an Immersed Boundary Extension}
+
+\subsection*{Project Description}
+The objective of this project is to develop a performance-portable solver for the 2D incompressible, low-Mach-number Navier--Stokes equations using Kokkos, with an emphasis on software structure similar to modern high-performance scientific computing codes.
+Our primary goal is to demonstrate that a single codebase can run on multiple hardware targets and execution backends while remaining modular enough to support additional physics and numerical capabilities.
+The base solver will discretize the 2D incompressible Navier--Stokes equations on a uniform Cartesian grid. 
+We will assume constant density and viscosity, low-Mach-number flow, and standard projection-based time advancement for velocity--pressure coupling.
+The code will be organized so that core operations such as field storage, stencil kernels, boundary-condition application, and linear solver interfaces remain backend-independent through Kokkos. We will solve the pressure Poisson equation
+with a geometric multigrid method with red--black Gauss-Seidel smoother. We will treat diffusion with a Crank--Nicolson discretization and solve the resulting linear system iteratively using red--black Gauss--Seidel. We will use forward Euler for the convection, and potentially
+extend to Adams-Bashforth. 
+
+As the project extension (+X), we will implement an immersed boundary capability for representing a solid obstacle embedded in the Cartesian mesh. 
+Our primary test case will be flow past a stationary cylinder in a rectangular domain.
+This extension advances the physical representation of the flow beyond simple box-domain boundary conditions and provides a meaningful test of code extensibility and portability.
+If time permits, we will extend this framework to two elastic curves with fixed endpoints forming the walls of a deformable channel.
+
+To highlight computational performance, we will compare the same solver on different Kokkos execution backends and, when available, different machines. We plan to try to run it on Great Lakes. If there are compute resources
+available through the course that would be helpful.
+These comparisons will focus on portability, scaling behavior, and relative runtime trends rather than full-scale optimization.
+This will help demonstrate whether the code structure supports the kind of machine-independent development used in larger HPC and national-lab-style software projects.
+
+Our baseline flow configuration will be a 2D rectangular domain with periodic or Dirichlet boundary conditions for validation, followed by a cylinder-in-crossflow configuration for the immersed-boundary study.
+Grid resolution will be chosen to balance physical fidelity and computational cost, with representative runs on moderate structured meshes. 
+If time permits, one additional stretch goal is to add passive tracer particles in order to further illustrate the flexibility of the framework.
+
+Overall, the project will emphasize three themes: performance portability, extensible software design, and the ability to incorporate richer flow physics into a structured Kokkos-based CFD code.

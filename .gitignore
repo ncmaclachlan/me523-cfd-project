@@ -21,3 +21,7 @@ spack/*/.spack-env/
 Testing/
 hw_7_tex/hw_7.pdf
 hw_7_tex/hw_7.aux
+
+hw_8_tex/hw_8.aux
+hw_8_tex/hw_8.log
+hw_8_tex/hw_8.out
