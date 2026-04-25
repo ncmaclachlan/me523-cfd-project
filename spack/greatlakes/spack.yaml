@@ -1,4 +1,7 @@
 spack:
+  concretizer:
+    unify: when_possible
+
   specs:
   # Great Lakes uses OpenMPI via the module system; ucx is available on most nodes.
   # GPU nodes have A100s (cuda_arch=80) and V100s (cuda_arch=70) — confirm your
@@ -46,7 +49,7 @@ spack:
       # packages in this environment. Ensure the full gcc-14 suite including
       # gfortran-14 is available, then run 'spack compiler find' to register it.
       # On Great Lakes check available gcc versions with: module spider gcc
-      require: '%gcc@14.1.0'
+      require: '%gcc@13.2.0'
       # CHANGE: must match cuda_arch in specs above; remove this line if CPU-only
       variants: cuda_arch=70
 
