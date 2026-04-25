@@ -18,7 +18,7 @@ spack:
   # @14: avoids the @:13.0.1+cuda conflict with cuda@11+
   # +wrapper uses Kokkos nvcc_wrapper so GCC can compile CUDA (avoids Clang requirement)
   # +zoltan is required when +zoltan2 is enabled
-  - trilinos@14: +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan +zoltan2 +wrapper ~aztec ~epetra cuda_arch=70
+  - "trilinos@14: +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan +zoltan2 +wrapper ~aztec ~epetra cuda_arch=70"
 
   - superlu-dist +openmp +parmetis
   - parmetis +shared
