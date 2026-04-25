@@ -15,12 +15,12 @@ spack:
   - kokkos +openmp +cuda +cuda_lambda +serial cuda_arch=70
   - kokkos-kernels +openmp +cuda +blas +lapack +cublas +cusparse +cusolver +execspace_cuda +execspace_serial +serial cuda_arch=70
 
-  # CHANGE: update cuda_arch to match above; drop +cuda and cuda_arch if CPU-only:
-  #   - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +amesos2 +zoltan2 ~aztec ~epetra ~cuda
-  - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan2 ~aztec ~epetra cuda_arch=70
+  # Trilinos is optional (built-in multigrid handles pressure without it).
+  # Dropped for Great Lakes: Trilinos @:13.0.1+cuda conflicts with cuda@11+,
+  # requires +wrapper and +zoltan for CUDA+GCC builds, and takes 1+ hour to build.
+  # To re-enable: fix spec to trilinos@14: +wrapper +zoltan +zoltan2 ... cuda_arch=70
+  # and add back superlu-dist +openmp +parmetis and parmetis +shared.
 
-  - superlu-dist +openmp +parmetis
-  - parmetis +shared
   - cmake
   - ninja
   - doxygen
