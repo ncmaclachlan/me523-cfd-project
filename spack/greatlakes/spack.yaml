@@ -12,12 +12,12 @@ spack:
   # If CPU-only, replace the three lines below with:
   #   - kokkos +openmp +serial ~cuda
   #   - kokkos-kernels +openmp +blas +lapack +execspace_serial +serial ~cuda
-  - kokkos +openmp +cuda +cuda_lambda +serial cuda_arch=80
-  - kokkos-kernels +openmp +cuda +blas +lapack +cublas +cusparse +cusolver +execspace_cuda +execspace_serial +serial cuda_arch=80
+  - kokkos +openmp +cuda +cuda_lambda +serial cuda_arch=70
+  - kokkos-kernels +openmp +cuda +blas +lapack +cublas +cusparse +cusolver +execspace_cuda +execspace_serial +serial cuda_arch=70
 
   # CHANGE: update cuda_arch to match above; drop +cuda and cuda_arch if CPU-only:
   #   - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +amesos2 +zoltan2 ~aztec ~epetra ~cuda
-  - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan2 ~aztec ~epetra cuda_arch=80
+  - trilinos +kokkos +tpetra +belos +muelu +ifpack2 +mpi +openmp +cuda +amesos2 +zoltan2 ~aztec ~epetra cuda_arch=70
 
   - superlu-dist +openmp +parmetis
   - parmetis +shared
@@ -47,7 +47,7 @@ spack:
       # On Great Lakes check available gcc versions with: module spider gcc
       require: '%gcc@14.1.0'
       # CHANGE: must match cuda_arch in specs above; remove this line if CPU-only
-      variants: cuda_arch=80
+      variants: cuda_arch=70
 
     mpi:
       require:
