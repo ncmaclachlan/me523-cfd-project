@@ -45,7 +45,7 @@ spack:
       # packages in this environment. Ensure the full gcc-14 suite including
       # gfortran-14 is available, then run 'spack compiler find' to register it.
       # On Great Lakes check available gcc versions with: module spider gcc
-      require: '%gcc@14.2.0'
+      require: '%gcc@14.1.0'
       # CHANGE: must match cuda_arch in specs above; remove this line if CPU-only
       variants: cuda_arch=80
 
