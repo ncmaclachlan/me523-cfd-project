@@ -130,6 +130,82 @@ def plot_velocity_error(data, t, re, *, levels=N_LEVELS):
     return fig, (ax_u, ax_v)
 
 
+def plot_streamlines(data, *, ax=None, density=1.4, color_by_speed=True,
+                     title="Streamlines"):
+    """Streamplot of the velocity field on cell-centred (u, v).
+
+    Staggered u (ny, nx+1) and v (ny+1, nx) are averaged in their staggered
+    direction to land on the pressure grid before being passed to
+    matplotlib's streamplot, which requires 1D monotonically-increasing
+    coordinate axes.
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
+
+    u = data["u"]["val"]
+    v = data["v"]["val"]
+    u_cc = 0.5 * (u[:, :-1] + u[:, 1:])
+    v_cc = 0.5 * (v[:-1, :] + v[1:, :])
+
+    # 1D coordinate axes from the pressure grid (which is cell-centred).
+    x_cc = data["p"]["x"][0, :]
+    y_cc = data["p"]["y"][:, 0]
+
+    if color_by_speed:
+        speed = np.sqrt(u_cc**2 + v_cc**2)
+        sp = ax.streamplot(x_cc, y_cc, u_cc, v_cc, color=speed,
+                           cmap=CMAP_VELOCITY, density=density,
+                           linewidth=0.6, arrowsize=0.7)
+        fig.colorbar(sp.lines, ax=ax, label=r"$|\mathbf{V}|$",
+                     fraction=0.046, pad=0.04)
+    else:
+        ax.streamplot(x_cc, y_cc, u_cc, v_cc, color="black",
+                      density=density, linewidth=0.6, arrowsize=0.7)
+
+    ax.set_xlim(x_cc[0], x_cc[-1])
+    ax.set_ylim(y_cc[0], y_cc[-1])
+    ax.set_xlabel(r"$x$")
+    ax.set_ylabel(r"$y$")
+    ax.set_aspect("equal")
+    ax.set_title(title)
+    return fig, ax
+
+
+def plot_centerline_u(data, *, x_cut=None, ax=None, label=None,
+                      title=r"$u(y)$ profile"):
+    """1D profile of u along y at a fixed streamwise station x_cut.
+
+    If x_cut is None the midline x = (x_min + x_max) / 2 is used.
+    Picks the u-face column whose x is closest to x_cut so no
+    interpolation is performed.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(3.5, 4.0))
+    else:
+        fig = ax.figure
+
+    xu = data["u"]["x"][0, :]   # 1D x at u-faces
+    yu = data["u"]["y"][:, 0]   # 1D y at u-faces
+
+    if x_cut is None:
+        x_cut = 0.5 * (xu[0] + xu[-1])
+
+    j_cut = int(np.argmin(np.abs(xu - x_cut)))
+    u_col = data["u"]["val"][:, j_cut]
+
+    ax.plot(u_col, yu, label=label or rf"$x = {xu[j_cut]:.3f}$")
+    ax.axvline(0.0, color="0.7", linewidth=0.5, zorder=0)
+    ax.set_xlabel(r"$u$")
+    ax.set_ylabel(r"$y$")
+    ax.set_ylim(yu[0], yu[-1])
+    ax.set_title(title)
+    if label:
+        ax.legend()
+    return fig, ax
+
+
 def plot_velocity_magnitude(data, *, ax=None, levels=N_LEVELS):
     """Filled contour of velocity magnitude.
 

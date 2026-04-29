@@ -9,6 +9,8 @@ from . import (
     plot_pressure,
     plot_velocity_magnitude,
     plot_velocity_error,
+    plot_streamlines,
+    plot_centerline_u,
     load_ke,
     load_divergence,
     load_error_norms,
@@ -80,6 +82,20 @@ def main():
     fig, ax, _ = plot_velocity_magnitude(data)
     _append_title(ax, suffix)
     fig.savefig(os.path.join(figures_dir, f"velocity_magnitude.{args.format}"))
+
+    fig, ax = plot_streamlines(data)
+    _append_title(ax, suffix)
+    fig.savefig(os.path.join(figures_dir, f"streamlines.{args.format}"))
+
+    # For Taylor-Green, sin(x)=0 at x=0, pi, 2pi, so the midline gives
+    # only roundoff. Cut at x = Lx/4 (= pi/2 for Lx = 2*pi) where the
+    # profile has its maximum amplitude.
+    x_left  = data["u"]["x"][0, 0]
+    x_right = data["u"]["x"][0, -1]
+    xu_cut  = x_left + 0.25 * (x_right - x_left)
+    fig, ax = plot_centerline_u(data, x_cut=xu_cut)
+    _append_title(ax, suffix)
+    fig.savefig(os.path.join(figures_dir, f"centerline_u.{args.format}"))
 
     ke_data = load_ke(output_dir)
     div_data = load_divergence(output_dir)

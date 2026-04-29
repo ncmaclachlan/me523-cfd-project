@@ -2,7 +2,13 @@
 
 from . import style  # noqa: F401  — applies rcParams on import
 from .loader import load_snapshot
-from .fields import plot_pressure, plot_velocity_magnitude, plot_velocity_error
+from .fields import (
+    plot_pressure,
+    plot_velocity_magnitude,
+    plot_velocity_error,
+    plot_streamlines,
+    plot_centerline_u,
+)
 from .diagnostics import (
     load_ke,
     load_divergence,
@@ -26,6 +32,8 @@ __all__ = [
     "plot_pressure",
     "plot_velocity_magnitude",
     "plot_velocity_error",
+    "plot_streamlines",
+    "plot_centerline_u",
     "load_ke",
     "load_divergence",
     "load_error_norms",
