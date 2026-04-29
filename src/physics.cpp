@@ -185,7 +185,7 @@ double compute_kinetic_energy(const SimState& s){
     return 0.5 * (sum_u2 + sum_v2) * s.grid.dx * s.grid.dy;
 }
 
-double compute_cfl_dt(const SimState& s, double cfl) {
+double compute_cfl_dt(const SimState& s, double cfl, double re, double cfl_visc) {
     SimState::View2D u = s.u;
     SimState::View2D v = s.v;
 
@@ -214,9 +214,16 @@ double compute_cfl_dt(const SimState& s, double cfl) {
     const double vel_max = Kokkos::max(u_max, v_max);
     const double h       = Kokkos::min(s.grid.dx, s.grid.dy);
 
-    // Guard against zero velocity (t=0 or fully damped flow)
-    if (vel_max < 1e-14) return cfl * h;
-    return cfl * h / vel_max;
+    // Viscous cap: dt < cfl_visc * Re * h^2 keeps alpha/h^2 = O(cfl_visc)
+    // so the CN-implicit operator stays diagonally dominant enough for
+    // RBGS to converge in O(10) iterations.
+    const double dt_visc = cfl_visc * re * h * h;
+
+    // Convective CFL (with guard against fully damped flow).
+    const double dt_conv = (vel_max < 1e-14) ? cfl * h
+                                             : cfl * h / vel_max;
+
+    return Kokkos::min(dt_conv, dt_visc);
 }
 
 double compute_l2_divergence(const SimState& s) {

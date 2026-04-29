@@ -56,9 +56,16 @@ void compute_v_diff_rhs(const SimState& s, double re,
 
 double compute_kinetic_energy(const SimState& s);
 
-// Returns dt = cfl * min(dx, dy) / u_max based on current velocity field.
-// u_max is the maximum absolute velocity over all u and v face values.
-double compute_cfl_dt(const SimState& s, double cfl);
+// Adaptive timestep:
+//   dt = min(cfl * h / u_max,           // convective CFL
+//            cfl_visc * Re * h^2)       // viscous CFL (keeps the
+//                                       // CN-implicit operator
+//                                       // well-conditioned for GS)
+// The viscous cap is what prevents dt blowing up as u_max -> 0 (e.g.
+// fully decayed Taylor-Green) -- without it, alpha = dt/(2 Re) grows
+// without bound and the GS spectral radius approaches 1.
+double compute_cfl_dt(const SimState& s, double cfl, double re,
+                      double cfl_visc = 0.5);
 
 double compute_l2_divergence(const SimState& s);
 

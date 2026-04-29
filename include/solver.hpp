@@ -73,7 +73,7 @@ struct Solver {
         };
 
         const double dt = (config.cfl > 0.0)
-                          ? physics::compute_cfl_dt(state, config.cfl)
+                          ? physics::compute_cfl_dt(state, config.cfl, config.re)
                           : config.dt;
 
         // 1. Apply boundary conditions
