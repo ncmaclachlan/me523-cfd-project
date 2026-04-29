@@ -10,6 +10,25 @@ struct ZeroIC {
     }
 };
 
+struct InflowOutflowIC {
+    void apply(SimState& s) const {
+        const auto& g = s.grid;
+        Kokkos::deep_copy(s.u, 0.0);
+        Kokkos::deep_copy(s.v, 0.0);
+        Kokkos::deep_copy(s.p, 0.0);
+        double u_left = 1.0;
+        int i0 = g.u_i_begin();
+        auto u = s.u;
+        Kokkos::parallel_for("set inflow u", 
+        Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+        KOKKOS_LAMBDA(const int j){
+            u(i0,j) = u_left;
+        });
+
+        Kokkos::fence();
+    }
+};
+
 struct TaylorGreenIC {
     void apply(SimState& s) const {
         const auto& g  = s.grid;
@@ -42,3 +61,4 @@ struct TaylorGreenIC {
         Kokkos::deep_copy(s.p, 0.0);
     }
 };
+

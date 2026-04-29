@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        Solver<PeriodicBC, CrankThatNicolson, TaylorGreenIC> solver(cfg);
+        Solver<InflowOutflowBC, CrankThatNicolson, InflowOutflowIC> solver(cfg);
         solver.run();
     }
     Kokkos::finalize();

@@ -16,13 +16,15 @@
 #include "pressure_solver.hpp"
 #include "output.hpp"
 
-template<typename BC = LidDrivenCavityBC,
-         typename Integrator = ForwardEuler>
+template<typename BC = PeriodicBC,
+         typename Integrator = CrankThatNicolson,
+         typename IC = TaylorGreenIC>
 struct Solver {
     RunConfig      config;
     SimState       state;
     BC             bc;
     Integrator     integrator;
+    IC             ic;
     PressureSolver pressure;
 
     // Cross-step scratch: owned by Solver, passed explicitly to each stage
@@ -30,16 +32,17 @@ struct Solver {
 
     RunStats stats_;
 
-    explicit Solver(const RunConfig& cfg, BC bc_ = {}, Integrator integ = {})
+    explicit Solver(const RunConfig& cfg, BC bc_ = {}, Integrator integ = {}, IC ic_ = {})
         : config(cfg),
           state(MacGrid2D(cfg), n_steps_estimate(cfg)),
           bc(std::move(bc_)),
           integrator(std::move(integ)),
+          ic(std::move(ic_)),
           u_star("u_star", state.grid.u_nx_total(), state.grid.u_ny_total()),
           v_star("v_star", state.grid.v_nx_total(), state.grid.v_ny_total()),
           rhs   ("rhs",    state.grid.p_nx_total(), state.grid.p_ny_total())
     {
-        TaylorGreenIC{}.apply(state);
+        ic.apply(state);
         pressure.init(state.grid);
     }
 
