@@ -76,4 +76,13 @@ void correct_velocity(SimState& s,
                        Kokkos::View<double**> v_star,
                        double dt);
 
+// Multiplicatively rescale u_star at the outflow face so the net flux
+// through the domain integrates to zero (required for the inflow/outflow
+// pressure Poisson problem to admit a solution -- see project notes Sec. 1.6).
+// u_inf is the prescribed inflow Dirichlet value; the inflow mass flux is
+// taken as u_inf * Ly (uniform inflow profile).
+void enforce_outflow_mass(SimState& s,
+                          Kokkos::View<double**> u_star,
+                          double u_inf);
+
 } // namespace physics

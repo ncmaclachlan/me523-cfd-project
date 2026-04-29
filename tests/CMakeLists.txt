@@ -21,3 +21,7 @@ add_test(NAME ViscousSolverTest COMMAND test_viscous_solver)
 add_executable(test_integrators test_integrators.cpp)
 target_link_libraries(test_integrators PRIVATE ns2d)
 add_test(NAME IntegratorsTest COMMAND test_integrators)
+
+add_executable(test_immersed_boundary test_immersed_boundary.cpp)
+target_link_libraries(test_immersed_boundary PRIVATE ns2d)
+add_test(NAME ImmersedBoundaryTest COMMAND test_immersed_boundary)

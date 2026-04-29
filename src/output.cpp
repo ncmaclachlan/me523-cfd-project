@@ -75,6 +75,41 @@ void CSVOutput::write(const SimState& s) const {
     std::cout << "Output written to " << this->filename << "_{p,u,v}.csv\n";
 }
 
+void CSVOutput::write_vorticity(const SimState& s) const {
+    Kokkos::fence();
+
+    auto u_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, s.u);
+    auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, s.v);
+
+    const auto& g = s.grid;
+    const double inv_dx = 1.0 / g.dx;
+    const double inv_dy = 1.0 / g.dy;
+
+    std::ofstream f(this->filename + "_w.csv");
+    if (!f.is_open())
+        throw std::runtime_error("Cannot open output file: " + this->filename + "_w.csv");
+    f << std::scientific << std::setprecision(10);
+    f << "i,j,x,y,w\n";
+
+    // Vorticity at cell corners: omega = dv/dx - du/dy.
+    // Corners run from (0,0) to (nx, ny) inclusive in cell-centred index space.
+    for (int i = 0; i <= g.nx; ++i)
+        for (int j = 0; j <= g.ny; ++j) {
+            const int iu = g.ng + i;       // u-face at this corner column
+            const int jv = g.ng + j;       // v-face at this corner row
+            // dv/dx between v(iv-1, jv) and v(iv, jv)
+            const double dvdx = (v_h(g.ng + i, jv) - v_h(g.ng + i - 1, jv)) * inv_dx;
+            // du/dy between u(iu, ju-1) and u(iu, ju)
+            const double dudy = (u_h(iu, g.ng + j) - u_h(iu, g.ng + j - 1)) * inv_dy;
+            const double w    = dvdx - dudy;
+            const double x    = i * g.dx;
+            const double y    = j * g.dy;
+            f << i << "," << j << "," << x << "," << y << "," << w << "\n";
+        }
+
+    std::cout << "Vorticity written to " << this->filename << "_w.csv\n";
+}
+
 void CSVOutput::write_exact(const SimState& s, double re) const {
     const auto& g = s.grid;
     const double nu = 1.0 / re;

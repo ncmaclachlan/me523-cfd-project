@@ -12,19 +12,22 @@
 #include "boundary_conditions.hpp"
 #include "initial_conditions.hpp"
 #include "integrator.hpp"
+#include "immersed_boundary.hpp"
 #include "physics.hpp"
 #include "pressure_solver.hpp"
 #include "output.hpp"
 
 template<typename BC = PeriodicBC,
          typename Integrator = CrankThatNicolson,
-         typename IC = TaylorGreenIC>
+         typename IC = TaylorGreenIC,
+         typename IB = NoIB>
 struct Solver {
     RunConfig      config;
     SimState       state;
     BC             bc;
     Integrator     integrator;
     IC             ic;
+    IB             ib;
     PressureSolver pressure;
 
     // Cross-step scratch: owned by Solver, passed explicitly to each stage
@@ -32,12 +35,13 @@ struct Solver {
 
     RunStats stats_;
 
-    explicit Solver(const RunConfig& cfg, BC bc_ = {}, Integrator integ = {}, IC ic_ = {})
+    explicit Solver(const RunConfig& cfg, BC bc_ = {}, Integrator integ = {}, IC ic_ = {}, IB ib_ = {})
         : config(cfg),
           state(MacGrid2D(cfg), n_steps_estimate(cfg)),
           bc(std::move(bc_)),
           integrator(std::move(integ)),
           ic(std::move(ic_)),
+          ib(std::move(ib_)),
           u_star("u_star", state.grid.u_nx_total(), state.grid.u_ny_total()),
           v_star("v_star", state.grid.v_nx_total(), state.grid.v_ny_total()),
           rhs   ("rhs",    state.grid.p_nx_total(), state.grid.p_ny_total())
@@ -45,6 +49,9 @@ struct Solver {
         ic.apply(state);
         pressure.init(state.grid);
         pressure.set_bc_sides(BC::pressure_sides());
+        if constexpr (!std::is_same_v<IB, NoIB>) {
+            ib.init(state.grid);
+        }
     }
 
     // Conservative upper bound on step count for pre-allocating history arrays.
@@ -76,6 +83,14 @@ struct Solver {
         // 2. Predict velocity (writes into u_star, v_star)
         Kokkos::fence(); auto t1 = Clock::now();
         integrator.predict(state, bc, u_star, v_star, config.re, dt);
+
+        // 2b. Immersed boundary direct forcing (no-op if IB == NoIB)
+        ib.apply(state, u_star, v_star, dt);
+
+        // 2c. Outflow mass-flux correction (no-op for periodic / lid-driven BCs)
+        if constexpr (std::is_same_v<BC, InflowOutflowBC>) {
+            physics::enforce_outflow_mass(state, u_star, bc.u_inf);
+        }
 
         // 3. Compute pressure Poisson RHS from divergence of u_star
         Kokkos::fence(); auto t2 = Clock::now();
@@ -150,6 +165,7 @@ struct Solver {
             std::chrono::steady_clock::now() - wall_start).count();
 
         output.write(state);
+        output.write_vorticity(state);
         output.write_kinetic_energy(state);
         output.write_l2_divergence(state);
         if (config.diagnostics) {

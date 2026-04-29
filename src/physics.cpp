@@ -301,6 +301,41 @@ void correct_velocity(SimState& s,
         });
 }
 
+void enforce_outflow_mass(SimState& s,
+                          Kokkos::View<double**> u_star,
+                          double u_inf) {
+    const auto& g = s.grid;
+    const int i_out = g.u_i_end() - 1;   // outflow u-face
+
+    // Compute outflow flux Q_out = sum_j u*(i_out, j) * dy
+    double Q_out = 0.0;
+    Kokkos::parallel_reduce("outflow_flux",
+        Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+        KOKKOS_LAMBDA(int j, double& lsum) {
+            lsum += u_star(i_out, j);
+        }, Q_out);
+    Q_out *= g.dy;
+
+    const double Q_in = u_inf * g.ly;
+
+    if (Kokkos::abs(Q_out) < 1e-14) {
+        // Cold start or fully blocked outflow: shift instead of scaling.
+        const double shift = (Q_in - Q_out) / g.ly;
+        Kokkos::parallel_for("outflow_shift",
+            Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+            KOKKOS_LAMBDA(int j) {
+                u_star(i_out, j) += shift;
+            });
+    } else {
+        const double scale = Q_in / Q_out;
+        Kokkos::parallel_for("outflow_scale",
+            Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+            KOKKOS_LAMBDA(int j) {
+                u_star(i_out, j) *= scale;
+            });
+    }
+}
+
 ErrorNorms compute_error_norms(const SimState& s, double re) {
     const double nu    = 1.0 / re;
     const double decay = Kokkos::exp(-2.0 * nu * s.time);

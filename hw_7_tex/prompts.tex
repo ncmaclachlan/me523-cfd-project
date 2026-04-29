@@ -110,3 +110,29 @@ Both \texttt{LidDrivenCavityBC} and \texttt{PeriodicBC} had their monolithic \te
 Six new tests added: zero RHS converges to zero; constant RHS with periodic BC converges to that constant (since $\nabla^2 C = 0$); \texttt{ForwardEuler} leaves a uniform field unchanged; \texttt{CrankThatNicolson} leaves a uniform field unchanged; \texttt{CrankThatNicolson} dissipates kinetic energy from a sinusoidal field at low Re. All 6 tests pass alongside the existing 4.
 
 \textbf{Date and Model:} Claude Sonnet 4.6, 2026-04-13
+
+\subsection*{Interaction 8}
+
+\textbf{Prompt:}
+\begin{quote}
+Review the current status of this branch. We have made multiple of the changes required to add the immersed boundary direct-forcing approach with a fixed cylinder in inflow/outflow as described in the project guidelines PDF. Come up with a plan to complete this objective and note potential issues, then complete the plan.
+\end{quote}
+
+\textbf{Response summary:}
+Claude reviewed the \texttt{bc} branch state, read \texttt{Final\_report\_instructions.pdf}~\S2.4, and produced a written plan before implementing the Uhlmann (2005) direct-forcing IB extension. Code changes:
+
+\textbf{New IB header} (\texttt{include/immersed\_boundary.hpp}): \texttt{CylinderIB} struct holding marker positions, surface element volume $V_p = 2\pi R \Delta x / N_p$, and force/velocity scratch \texttt{Kokkos::View<double*>} arrays. \texttt{ib\_roma\_1d(r, dx)} implements the 3-cell smoothed delta (Eq.~48). \texttt{apply()} runs three stages per timestep: (i) interpolate $u^\star$ at each marker via the 3$\times$3 staggered Roma stencil (separate stencils for u-face and v-face stagger); (ii) compute $\mathbf{F}=(\mathbf{u}_{IB}-\mathbf{U})/\Delta t=-\mathbf{U}/\Delta t$ for a stationary cylinder; (iii) spread back to grid with \texttt{Kokkos::atomic\_add} into $u^\star,v^\star$. A \texttt{NoIB} default no-op struct preserves backward compatibility.
+
+\textbf{Solver template extended} (\texttt{include/solver.hpp}): added a 4th template parameter \texttt{IB=NoIB}; \texttt{ib.apply(state, u\_star, v\_star, dt)} is called between \texttt{integrator.predict} and \texttt{compute\_pressure\_rhs}, followed by an outflow mass-flux correction (\texttt{if constexpr (std::is\_same\_v<BC, InflowOutflowBC>)}) per project notes \S1.6. The constructor invokes \texttt{ib.init(grid)} unless \texttt{IB} is \texttt{NoIB}.
+
+\textbf{Outflow mass conservation} (\texttt{src/physics.cpp}, \texttt{include/physics.hpp}): \texttt{enforce\_outflow\_mass(state, u\_star, u\_inf)} computes the outflow flux $Q_\text{out} = \sum_j u^\star(i_\text{out},j)\,\Delta y$, then either rescales by $Q_\text{in}/Q_\text{out}$ (general case) or applies a uniform shift (cold-start, near-zero outflow), so the pressure Poisson RHS integrates to zero exactly.
+
+\textbf{Vorticity output} (\texttt{src/output.cpp}, \texttt{include/output.hpp}): added \texttt{CSVOutput::write\_vorticity} that mirrors $u,v$ to host and writes $\omega = \partial v/\partial x - \partial u/\partial y$ at cell corners. \texttt{Solver::run} now invokes it alongside the existing CSV writers.
+
+\textbf{ib\_solver app} (\texttt{apps/ib\_solver.cpp}): added CLI flags \texttt{--D, --xc, --yc, --np}; defaults set $L_x = L_y = 10D$ with cylinder at $(2.5D, 5D)$, $N_p \approx 2\pi R/\Delta x$. Instantiates \texttt{Solver<InflowOutflowBC, CrankThatNicolson, UniformStreamIC, CylinderIB>} so the cold-start uniform stream matches the inflow Dirichlet exactly.
+
+\textbf{Tests} (\texttt{tests/test\_immersed\_boundary.cpp}, registered in \texttt{tests/CMakeLists.txt}): two new tests --- (1) Roma kernel integrates to one over its support; (2) after one IB pass on a uniform unit stream past a stationary cylinder, the velocity reinterpolated at marker positions drops from 1.0 to ${\approx}0.5$ (the discrete spread/interp is not an exact inverse, so a single forcing pass cannot zero the marker velocity completely; iteration during the simulation drives it down further). All seven \texttt{ctest} targets pass.
+
+\textbf{Smoke test:} \texttt{ib\_solver --nx 64 --ny 64 --re 30 --t\_end 0.5} ran to completion with multigrid residual at ${\sim}10^{-9}$ and $\|\nabla\cdot\mathbf{u}\|_2$ at the multigrid floor every step, confirming the IB step does not corrupt the projection.
+
+\textbf{Date and Model:} Claude Opus 4.7, 2026-04-29
