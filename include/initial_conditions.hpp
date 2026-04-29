@@ -10,6 +10,41 @@ struct ZeroIC {
     }
 };
 
+struct InflowOutflowIC {
+    void apply(SimState& s) const {
+        const auto& g = s.grid;
+        Kokkos::deep_copy(s.u, 0.0);
+        Kokkos::deep_copy(s.v, 0.0);
+        Kokkos::deep_copy(s.p, 0.0);
+        double u_left = 1.0;
+        int i0 = g.u_i_begin();
+        auto u = s.u;
+        Kokkos::parallel_for("set inflow u",
+        Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+        KOKKOS_LAMBDA(const int j){
+            u(i0,j) = u_left;
+        });
+
+        Kokkos::fence();
+    }
+};
+
+// Uniform stream u = u_inf, v = 0 everywhere — matches an InflowOutflowBC
+// inflow at startup so there is no transient front to flush through the
+// domain.
+struct UniformStreamIC {
+    double u_inf = 1.0;
+
+    UniformStreamIC() = default;
+    UniformStreamIC(double u_in) : u_inf(u_in) {}
+
+    void apply(SimState& s) const {
+        Kokkos::deep_copy(s.u, u_inf);
+        Kokkos::deep_copy(s.v, 0.0);
+        Kokkos::deep_copy(s.p, 0.0);
+    }
+};
+
 struct TaylorGreenIC {
     void apply(SimState& s) const {
         const auto& g  = s.grid;
@@ -42,3 +77,4 @@ struct TaylorGreenIC {
         Kokkos::deep_copy(s.p, 0.0);
     }
 };
+
