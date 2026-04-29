@@ -11,12 +11,17 @@ struct ZeroIC {
 };
 
 struct InflowOutflowIC {
+    double u_inf = 1.0;
+
+    InflowOutflowIC() = default;
+    InflowOutflowIC(double u_in) : u_inf(u_in) {}
+
     void apply(SimState& s) const {
         const auto& g = s.grid;
         Kokkos::deep_copy(s.u, 0.0);
         Kokkos::deep_copy(s.v, 0.0);
         Kokkos::deep_copy(s.p, 0.0);
-        double u_left = 1.0;
+        double u_left = u_inf;
         int i0 = g.u_i_begin();
         auto u = s.u;
         Kokkos::parallel_for("set inflow u",

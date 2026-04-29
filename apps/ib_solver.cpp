@@ -54,11 +54,11 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        Solver<InflowOutflowBC, CrankThatNicolson, UniformStreamIC> solver(
+        Solver<InflowOutflowBC, CrankThatNicolson, InflowOutflowIC> solver(
             cfg,
             InflowOutflowBC{cfg.u_inf},
             {},
-            UniformStreamIC{cfg.u_inf});
+            InflowOutflowIC{cfg.u_inf});
         solver.run();
     }
     Kokkos::finalize();
