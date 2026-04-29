@@ -41,6 +41,7 @@ struct Solver {
     {
         TaylorGreenIC{}.apply(state);
         pressure.init(state.grid);
+        pressure.set_bc_sides(BC::pressure_sides());
     }
 
     // Conservative upper bound on step count for pre-allocating history arrays.

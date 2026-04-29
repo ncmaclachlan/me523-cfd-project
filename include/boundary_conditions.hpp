@@ -1,5 +1,6 @@
 #pragma once
 #include "sim_state.hpp"
+#include "pressure_solver.hpp"
 #include <Kokkos_Core.hpp>
 
 struct LidDrivenCavityBC {
@@ -7,6 +8,12 @@ struct LidDrivenCavityBC {
 
     LidDrivenCavityBC() = default;
     LidDrivenCavityBC(double u_lid) : lid_velocity(u_lid) {}
+
+    // Pressure has homogeneous Neumann (∂p/∂n = 0) on every wall.
+    static PressureBCSides pressure_sides() {
+        return { PressureBC::Neumann, PressureBC::Neumann,
+                 PressureBC::Neumann, PressureBC::Neumann };
+    }
 
     void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {
         const double u_lid = lid_velocity;
@@ -57,6 +64,12 @@ struct LidDrivenCavityBC {
 };
 
 struct PeriodicBC {
+    // All sides periodic for the pressure Poisson problem.
+    static PressureBCSides pressure_sides() {
+        return { PressureBC::Periodic, PressureBC::Periodic,
+                 PressureBC::Periodic, PressureBC::Periodic };
+    }
+
     void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {
         // Sync duplicate periodic face: u at i=begin and i=end-1 are the same
         // physical face.  Average to keep both sides symmetric, then set ghosts.
@@ -160,5 +173,107 @@ struct PeriodicBC {
 
         apply_u(g, s.u);
         apply_v(g, s.v);
+    }
+};
+
+// -------------------------------------------------------------------------
+// InflowOutflowBC
+//   Left  (x=0,  inflow):   u = u_inf  (Dirichlet),  v zero-gradient
+//   Right (x=Lx, outflow):  u, v zero-gradient (∂/∂x = 0)
+//   Top/bottom (symmetry):  ∂u/∂y = 0,  v = 0,  ∂p/∂y = 0
+//
+// Pressure: Neumann left/top/bottom, Dirichlet (p=0) right. The Dirichlet
+// outlet pins the constant, so PressureSolver drops its mean-zero gauge.
+// -------------------------------------------------------------------------
+struct InflowOutflowBC {
+    double u_inf = 1.0;
+
+    InflowOutflowBC() = default;
+    InflowOutflowBC(double u_in) : u_inf(u_in) {}
+
+    static PressureBCSides pressure_sides() {
+        return { PressureBC::Neumann,    // left   (inflow)
+                 PressureBC::Dirichlet,  // right  (outflow)
+                 PressureBC::Neumann,    // bottom (symmetry)
+                 PressureBC::Neumann };  // top    (symmetry)
+    }
+
+    void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {
+        const double u_in = u_inf;
+
+        // Inflow face (sits exactly on x=0): Dirichlet u = u_inf.
+        // Outflow face: zero-gradient extrapolation. The viscous solver
+        // excludes u_i_end()-1 from its sweep (legacy periodic-DOF count),
+        // so we must set the outflow face value here.
+        Kokkos::parallel_for("io_u_lr",
+            Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+            KOKKOS_LAMBDA(int j) {
+                u(g.u_i_begin(),     j) = u_in;
+                u(g.u_i_end() - 1,   j) = u(g.u_i_end() - 2, j);
+            });
+
+        // Streamwise ghost cells (one cell outside the boundary u-face)
+        Kokkos::parallel_for("io_u_lr_ghost",
+            Kokkos::RangePolicy<>(g.u_j_begin(), g.u_j_end()),
+            KOKKOS_LAMBDA(int j) {
+                u(g.u_i_begin() - 1, j) = u_in;
+                u(g.u_i_end(),       j) = u(g.u_i_end() - 1, j);
+            });
+
+        // Top/bottom symmetry: u-face is half a cell from the wall, so
+        // ghost = interior gives ∂u/∂y = 0 at the wall.
+        Kokkos::parallel_for("io_u_tb",
+            Kokkos::RangePolicy<>(g.u_i_begin() - 1, g.u_i_end() + 1),
+            KOKKOS_LAMBDA(int i) {
+                u(i, g.u_j_begin() - 1) = u(i, g.u_j_begin());
+                u(i, g.u_j_end())       = u(i, g.u_j_end() - 1);
+            });
+    }
+
+    void apply_v(const MacGrid2D& g, Kokkos::View<double**> v) const {
+        // Top/bottom walls: v-face sits exactly on the wall, set v = 0.
+        Kokkos::parallel_for("io_v_tb",
+            Kokkos::RangePolicy<>(g.v_i_begin(), g.v_i_end()),
+            KOKKOS_LAMBDA(int i) {
+                v(i, g.v_j_begin())     = 0.0;
+                v(i, g.v_j_end() - 1)   = 0.0;
+            });
+
+        // Left/right: v-face is half a cell from the wall; use ghost = interior
+        // so that ∂v/∂x = 0 (zero-gradient) on both inflow and outflow.
+        Kokkos::parallel_for("io_v_lr",
+            Kokkos::RangePolicy<>(g.v_j_begin() - 1, g.v_j_end() + 1),
+            KOKKOS_LAMBDA(int j) {
+                v(g.v_i_begin() - 1, j) = v(g.v_i_begin(),   j);
+                v(g.v_i_end(),       j) = v(g.v_i_end() - 1, j);
+            });
+    }
+
+    void apply_p(SimState& s) const {
+        const MacGrid2D& g = s.grid;
+
+        // Left: Neumann, ghost = interior
+        // Right: homogeneous Dirichlet at the half-cell-offset face,
+        //        ghost = -interior so the average across the face is 0.
+        Kokkos::parallel_for("io_p_lr",
+            Kokkos::RangePolicy<>(g.p_j_begin(), g.p_j_end()),
+            KOKKOS_LAMBDA(int j) {
+                s.p(g.p_i_begin() - 1, j) =  s.p(g.p_i_begin(),   j);
+                s.p(g.p_i_end(),       j) = -s.p(g.p_i_end() - 1, j);
+            });
+
+        // Top/bottom symmetry: Neumann, ghost = interior
+        Kokkos::parallel_for("io_p_tb",
+            Kokkos::RangePolicy<>(g.p_i_begin(), g.p_i_end()),
+            KOKKOS_LAMBDA(int i) {
+                s.p(i, g.p_j_begin() - 1) = s.p(i, g.p_j_begin());
+                s.p(i, g.p_j_end())       = s.p(i, g.p_j_end() - 1);
+            });
+    }
+
+    void apply(SimState& s) const {
+        apply_p(s);
+        apply_u(s.grid, s.u);
+        apply_v(s.grid, s.v);
     }
 };

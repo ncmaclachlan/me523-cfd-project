@@ -9,6 +9,7 @@ static void print_usage(const char* prog) {
               << "  --nx N            Grid cells in x (default 64)\n"
               << "  --ny N            Grid cells in y (default 64)\n"
               << "  --re F            Reynolds number  (default 100)\n"
+              << "  --u_inf F         Inflow streamwise velocity (default 1.0)\n"
               << "  --cfl F           CFL number, <=0 for fixed dt (default 0.5)\n"
               << "  --dt F            Fixed timestep when cfl<=0 (default 1e-3)\n"
               << "  --t_end F         End time (default 10)\n"
@@ -34,6 +35,8 @@ int main(int argc, char* argv[]) {
                 cfg.ny = std::atoi(argv[++i]);
             else if (std::strcmp(argv[i], "--re") == 0 && i + 1 < argc)
                 cfg.re = std::atof(argv[++i]);
+            else if (std::strcmp(argv[i], "--u_inf") == 0 && i + 1 < argc)
+                cfg.u_inf = std::atof(argv[++i]);
             else if (std::strcmp(argv[i], "--cfl") == 0 && i + 1 < argc)
                 cfg.cfl = std::atof(argv[++i]);
             else if (std::strcmp(argv[i], "--dt") == 0 && i + 1 < argc)
@@ -51,7 +54,8 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        Solver<PeriodicBC, CrankThatNicolson> solver(cfg);
+        Solver<InflowOutflowBC, CrankThatNicolson> solver(
+            cfg, InflowOutflowBC{cfg.u_inf});
         solver.run();
     }
     Kokkos::finalize();

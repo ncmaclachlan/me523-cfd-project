@@ -13,6 +13,7 @@ struct RunConfig {
     double cfl   = 0.5;   // adaptive CFL number; set <= 0 to use fixed dt
     double t_end = 10.0;
     double re    = 100.0;
+    double u_inf = 1.0;   // inflow streamwise velocity (used by InflowOutflowBC)
 
     int         output_interval = 100;
     std::string output_filename = "output";

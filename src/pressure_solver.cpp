@@ -53,32 +53,59 @@ void PressureSolver::init(const MacGrid2D& grid) {
 }
 
 // ---------------------------------------------------------------------------
-// periodic_fill — ghost-cell exchange for cell-centered periodic field
+// fill_ghosts — per-side ghost-cell exchange for cell-centered field
+//   Periodic:  ghost = opposite interior edge
+//   Neumann:   ghost = nearest interior cell  (zero gradient)
+//   Dirichlet: ghost = -nearest interior cell (p=0 at half-cell-offset face)
 // ---------------------------------------------------------------------------
 
-void PressureSolver::periodic_fill(Kokkos::View<double**> v,
-                                   int nx, int ny) const {
-    // x-direction ghosts
-    Kokkos::parallel_for("mg_pfill_x", Kokkos::RangePolicy<>(1, ny + 1),
+void PressureSolver::fill_ghosts(Kokkos::View<double**> v,
+                                 int nx, int ny) const {
+    // Encode tags as ints for capture into KOKKOS_LAMBDA (enum class is fine
+    // but plain ints keep the device code uncluttered).
+    const int bL = static_cast<int>(bc_sides_.left);
+    const int bR = static_cast<int>(bc_sides_.right);
+    const int bB = static_cast<int>(bc_sides_.bottom);
+    const int bT = static_cast<int>(bc_sides_.top);
+    constexpr int kPeriodic  = static_cast<int>(PressureBC::Periodic);
+    constexpr int kNeumann   = static_cast<int>(PressureBC::Neumann);
+    constexpr int kDirichlet = static_cast<int>(PressureBC::Dirichlet);
+
+    Kokkos::parallel_for("mg_gfill_x", Kokkos::RangePolicy<>(1, ny + 1),
         KOKKOS_LAMBDA(int j) {
-            v(0,      j) = v(nx, j);
-            v(nx + 1, j) = v(1,  j);
+            // Left ghost
+            if (bL == kPeriodic)        v(0, j) = v(nx, j);
+            else if (bL == kNeumann)    v(0, j) =  v(1,  j);
+            else /* Dirichlet */        v(0, j) = -v(1,  j);
+
+            // Right ghost
+            if (bR == kPeriodic)        v(nx + 1, j) = v(1,  j);
+            else if (bR == kNeumann)    v(nx + 1, j) =  v(nx, j);
+            else /* Dirichlet */        v(nx + 1, j) = -v(nx, j);
         });
 
-    // y-direction ghosts
-    Kokkos::parallel_for("mg_pfill_y", Kokkos::RangePolicy<>(1, nx + 1),
+    Kokkos::parallel_for("mg_gfill_y", Kokkos::RangePolicy<>(1, nx + 1),
         KOKKOS_LAMBDA(int i) {
-            v(i, 0)      = v(i, ny);
-            v(i, ny + 1) = v(i, 1);
+            // Bottom ghost
+            if (bB == kPeriodic)        v(i, 0) = v(i, ny);
+            else if (bB == kNeumann)    v(i, 0) =  v(i, 1);
+            else /* Dirichlet */        v(i, 0) = -v(i, 1);
+
+            // Top ghost
+            if (bT == kPeriodic)        v(i, ny + 1) = v(i, 1);
+            else if (bT == kNeumann)    v(i, ny + 1) =  v(i, ny);
+            else /* Dirichlet */        v(i, ny + 1) = -v(i, ny);
         });
 
-    // corners
-    Kokkos::parallel_for("mg_pfill_c", Kokkos::RangePolicy<>(0, 1),
+    // Corners — fill diagonally from the already-populated edge ghosts.
+    // The 5-point Laplacian doesn't read corners, but the existing code did,
+    // so keep the pattern for safety.
+    Kokkos::parallel_for("mg_gfill_c", Kokkos::RangePolicy<>(0, 1),
         KOKKOS_LAMBDA(int) {
-            v(0,      0)      = v(nx, ny);
-            v(nx + 1, 0)      = v(1,  ny);
-            v(0,      ny + 1) = v(nx, 1);
-            v(nx + 1, ny + 1) = v(1,  1);
+            v(0,      0)      = 0.5 * (v(1,  0)      + v(0,      1));
+            v(nx + 1, 0)      = 0.5 * (v(nx, 0)      + v(nx + 1, 1));
+            v(0,      ny + 1) = 0.5 * (v(1,  ny + 1) + v(0,      ny));
+            v(nx + 1, ny + 1) = 0.5 * (v(nx, ny + 1) + v(nx + 1, ny));
         });
 }
 
@@ -98,7 +125,7 @@ void PressureSolver::smooth_rbgs(Level& lev, int sweeps) const {
 
     for (int s = 0; s < sweeps; ++s) {
         // --- Red pass: (i+j) % 2 == 0 ---
-        periodic_fill(phi, nx, ny);
+        fill_ghosts(phi, nx, ny);
         Kokkos::parallel_for("mg_rbgs_red",
             Kokkos::MDRangePolicy<Kokkos::Rank<2>>({1, 1}, {nx + 1, ny + 1}),
             KOKKOS_LAMBDA(int i, int j) {
@@ -109,7 +136,7 @@ void PressureSolver::smooth_rbgs(Level& lev, int sweeps) const {
             });
 
         // --- Black pass: (i+j) % 2 == 1 ---
-        periodic_fill(phi, nx, ny);
+        fill_ghosts(phi, nx, ny);
         Kokkos::parallel_for("mg_rbgs_black",
             Kokkos::MDRangePolicy<Kokkos::Rank<2>>({1, 1}, {nx + 1, ny + 1}),
             KOKKOS_LAMBDA(int i, int j) {
@@ -131,7 +158,7 @@ void PressureSolver::compute_residual(Level& lev) const {
     const double inv_dx2 = 1.0 / (lev.dx * lev.dx);
     const double inv_dy2 = 1.0 / (lev.dy * lev.dy);
 
-    periodic_fill(lev.phi, nx, ny);
+    fill_ghosts(lev.phi, nx, ny);
 
     auto phi = lev.phi;
     auto f   = lev.f;
@@ -151,7 +178,7 @@ void PressureSolver::compute_residual(Level& lev) const {
 // ---------------------------------------------------------------------------
 
 void PressureSolver::restrict_to(const Level& fine, Level& coarse) const {
-    periodic_fill(const_cast<Level&>(fine).r, fine.nx, fine.ny);
+    fill_ghosts(const_cast<Level&>(fine).r, fine.nx, fine.ny);
 
     const int nc_x = coarse.nx;
     const int nc_y = coarse.ny;
@@ -174,7 +201,7 @@ void PressureSolver::restrict_to(const Level& fine, Level& coarse) const {
 // ---------------------------------------------------------------------------
 
 void PressureSolver::prolongate_add(const Level& coarse, Level& fine) const {
-    periodic_fill(const_cast<Level&>(coarse).phi, coarse.nx, coarse.ny);
+    fill_ghosts(const_cast<Level&>(coarse).phi, coarse.nx, coarse.ny);
 
     const int nf_x = fine.nx;
     const int nf_y = fine.ny;
@@ -280,8 +307,13 @@ PressureSolveResult PressureSolver::solve(SimState& s,
     Kokkos::deep_copy(levels_[0].f,   rhs);
     Kokkos::deep_copy(levels_[0].phi, s.p);
 
-    // Enforce compatibility: mean(f) = 0
-    subtract_mean(levels_[0].f, nx, ny);
+    // Mean-zero gauge is required only when the Poisson problem is
+    // rank-deficient (all-Periodic or all-Neumann). Any Dirichlet side
+    // pins the constant, so skip the gauge in that case.
+    const bool gauge = !has_dirichlet();
+
+    // Enforce compatibility: mean(f) = 0  (only meaningful when gauge active)
+    if (gauge) subtract_mean(levels_[0].f, nx, ny);
 
     double rnorm = 0.0;
 
@@ -289,7 +321,7 @@ PressureSolveResult PressureSolver::solve(SimState& s,
         vcycle(0);
 
         // Enforce mean-zero gauge on solution
-        subtract_mean(levels_[0].phi, nx, ny);
+        if (gauge) subtract_mean(levels_[0].phi, nx, ny);
 
         // Check convergence
         compute_residual(levels_[0]);
@@ -304,14 +336,14 @@ PressureSolveResult PressureSolver::solve(SimState& s,
         rnorm = std::sqrt(rnorm / static_cast<double>(nx * ny));
 
         if (rnorm < tol) {
-            periodic_fill(levels_[0].phi, nx, ny);
+            fill_ghosts(levels_[0].phi, nx, ny);
             Kokkos::deep_copy(s.p, levels_[0].phi);
             return {iter + 1, rnorm};
         }
     }
 
     // Hit max iterations — copy solution anyway
-    periodic_fill(levels_[0].phi, nx, ny);
+    fill_ghosts(levels_[0].phi, nx, ny);
     Kokkos::deep_copy(s.p, levels_[0].phi);
     return {max_vcycles, rnorm};
 }
