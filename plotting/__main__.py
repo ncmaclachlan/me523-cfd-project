@@ -61,6 +61,8 @@ def main():
     parser.add_argument("--format", default="png",
                         choices=["png", "pdf", "svg"],
                         help="Output image format")
+    parser.add_argument("--scaling", nargs="+", metavar="RUN_DIR",
+                        help="Additional run dirs for scaling/comparison plots")
     args = parser.parse_args()
 
     output_dir = os.path.join(args.run_dir, "output")
@@ -110,6 +112,28 @@ def main():
         fig, ax = plot_error_norms(err_data)
         _append_title(ax, suffix)
         fig.savefig(os.path.join(figures_dir, f"error_norms.{args.format}"))
+
+    if args.scaling:
+        from . import plot_scaling, plot_stage_breakdown, plot_backend_comparison
+        all_dirs = [args.run_dir] + args.scaling
+
+        def _grid_label(d):
+            m = re.match(r"run_(\d+)_(\d+)", os.path.basename(os.path.normpath(d)))
+            return f"{m.group(1)}×{m.group(2)}" if m else os.path.basename(os.path.normpath(d))
+
+        labels = [_grid_label(d) for d in all_dirs]
+
+        fig, ax = plot_scaling(all_dirs, labels)
+        fig.savefig(os.path.join(figures_dir, f"scaling.{args.format}"),
+                    bbox_inches="tight")
+
+        fig, ax = plot_stage_breakdown(args.run_dir)
+        fig.savefig(os.path.join(figures_dir, f"stage_breakdown.{args.format}"),
+                    bbox_inches="tight")
+
+        fig, ax = plot_backend_comparison(all_dirs, labels)
+        fig.savefig(os.path.join(figures_dir, f"backend_comparison.{args.format}"),
+                    bbox_inches="tight")
 
     if args.show:
         import matplotlib.pyplot as plt

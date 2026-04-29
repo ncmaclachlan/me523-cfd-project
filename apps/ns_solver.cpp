@@ -13,6 +13,7 @@ static void print_usage(const char* prog) {
               << "  --dt F            Fixed timestep when cfl<=0 (default 1e-3)\n"
               << "  --t_end F         End time (default 10)\n"
               << "  --diagnostics     Compute exact-solution error norms each step\n"
+              << "  --profile         Write run_stats.json to run directory\n"
               << "  --help            Show this message\n";
 }
 
@@ -41,6 +42,8 @@ int main(int argc, char* argv[]) {
                 cfg.t_end = std::atof(argv[++i]);
             else if (std::strcmp(argv[i], "--diagnostics") == 0)
                 cfg.diagnostics = true;
+            else if (std::strcmp(argv[i], "--profile") == 0)
+                cfg.profile = true;
             else if (std::strcmp(argv[i], "--help") == 0) {
                 print_usage(argv[0]);
                 Kokkos::finalize();

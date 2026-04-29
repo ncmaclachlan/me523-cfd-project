@@ -1,4 +1,5 @@
 #include "output.hpp"
+#include "run_stats.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <filesystem>
@@ -171,4 +172,62 @@ void CSVOutput::write_error_norms(const SimState& s) const {
     }
 
     std::cout << "Error norm history written to " << this->filename << "_error.csv\n";
+}
+
+void CSVOutput::write_run_stats(const RunStats& stats, const RunConfig& cfg) const {
+    namespace fs = std::filesystem;
+    // filename is run_dir/output/output — go up two levels to reach run_dir
+    fs::path run_dir = fs::path(filename).parent_path().parent_path();
+    fs::create_directories(run_dir);
+
+    fs::path json_path = run_dir / "run_stats.json";
+    std::ofstream f(json_path);
+    if (!f.is_open())
+        throw std::runtime_error("Cannot open: " + json_path.string());
+
+    const std::string backend = Kokkos::DefaultExecutionSpace::name();
+    const int n = stats.n_steps;
+    const double wall = stats.wall_total;
+
+    f << std::fixed << std::setprecision(6);
+    f << "{\n";
+
+    f << "  \"config\": {\n";
+    f << "    \"nx\": "       << cfg.nx    << ",\n";
+    f << "    \"ny\": "       << cfg.ny    << ",\n";
+    f << "    \"re\": "       << cfg.re    << ",\n";
+    f << "    \"cfl\": "      << cfg.cfl   << ",\n";
+    f << "    \"dt\": "       << cfg.dt    << ",\n";
+    f << "    \"t_end\": "    << cfg.t_end << ",\n";
+    f << "    \"backend\": \"" << backend  << "\"\n";
+    f << "  },\n";
+
+    f << "  \"timing\": {\n";
+    f << "    \"wall_total_s\": "          << wall                               << ",\n";
+    f << "    \"wall_per_step_ms\": "      << (n > 0 ? wall / n * 1e3 : 0.0)    << ",\n";
+    f << "    \"wall_bc_s\": "             << stats.wall_bc                      << ",\n";
+    f << "    \"wall_predict_s\": "        << stats.wall_predict                 << ",\n";
+    f << "    \"wall_pressure_rhs_s\": "   << stats.wall_pressure_rhs            << ",\n";
+    f << "    \"wall_pressure_solve_s\": " << stats.wall_pressure_solve          << ",\n";
+    f << "    \"wall_correct_s\": "        << stats.wall_correct                 << "\n";
+    f << "  },\n";
+
+    f << "  \"solver_stats\": {\n";
+    f << "    \"n_steps\": "          << n                                               << ",\n";
+    f << "    \"dt_min\": "           << stats.dt_min                                    << ",\n";
+    f << "    \"dt_mean\": "          << (n > 0 ? stats.dt_sum / n : 0.0)               << ",\n";
+    f << "    \"dt_max\": "           << stats.dt_max                                    << ",\n";
+    f << "    \"pres_iters_min\": "   << (stats.pres_iters_min == std::numeric_limits<int>::max() ? 0 : stats.pres_iters_min) << ",\n";
+    f << "    \"pres_iters_mean\": "  << (n > 0 ? static_cast<double>(stats.pres_iters_total) / n : 0.0) << ",\n";
+    f << "    \"pres_iters_max\": "   << stats.pres_iters_max                           << ",\n";
+    f << "    \"pres_res_max\": "     << stats.pres_res_max                             << ",\n";
+    f << "    \"has_rbgs\": "         << (stats.has_rbgs ? "true" : "false")            << ",\n";
+    f << "    \"rbgs_iters_min\": "   << stats.rbgs_iters_min                           << ",\n";
+    f << "    \"rbgs_iters_max\": "   << stats.rbgs_iters_max                           << ",\n";
+    f << "    \"rbgs_iters_total\": " << stats.rbgs_iters_total                         << ",\n";
+    f << "    \"rbgs_res_max\": "     << stats.rbgs_res_max                             << "\n";
+    f << "  }\n";
+    f << "}\n";
+
+    std::cout << "Run stats written to " << json_path.string() << "\n";
 }

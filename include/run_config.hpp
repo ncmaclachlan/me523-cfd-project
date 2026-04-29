@@ -17,6 +17,7 @@ struct RunConfig {
     int         output_interval = 100;
     std::string output_filename = "output";
     bool        diagnostics     = false;
+    bool        profile         = false;
 
     /// Build the run directory path: data/run_{nx}_{ny}_{Re}_{cfl}  (or _dt{dt} when CFL<=0)
     std::string run_dir() const {

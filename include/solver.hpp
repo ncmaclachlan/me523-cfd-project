@@ -7,6 +7,7 @@
 #include <limits>
 #include <type_traits>
 #include "run_config.hpp"
+#include "run_stats.hpp"
 #include "sim_state.hpp"
 #include "boundary_conditions.hpp"
 #include "initial_conditions.hpp"
@@ -14,23 +15,6 @@
 #include "physics.hpp"
 #include "pressure_solver.hpp"
 #include "output.hpp"
-
-struct RunStats {
-    int    n_steps      = 0;
-    double dt_min       = std::numeric_limits<double>::max();
-    double dt_max       = 0.0;
-    double dt_sum       = 0.0;
-    // RBGS viscous solver (u and v combined for conciseness)
-    int    rbgs_iters_min   = std::numeric_limits<int>::max();
-    int    rbgs_iters_max   = 0;
-    long   rbgs_iters_total = 0;
-    double rbgs_res_max     = 0.0;
-    // Pressure multigrid solver
-    int    pres_iters_min   = std::numeric_limits<int>::max();
-    int    pres_iters_max   = 0;
-    long   pres_iters_total = 0;
-    double pres_res_max     = 0.0;
-};
 
 template<typename BC = LidDrivenCavityBC,
          typename Integrator = ForwardEuler>
@@ -72,25 +56,41 @@ struct Solver {
     }
 
     void advance() {
-        // Compute time step: adaptive CFL or fixed
+        using Clock = std::chrono::steady_clock;
+        auto dur = [](Clock::time_point a, Clock::time_point b) {
+            return std::chrono::duration<double>(b - a).count();
+        };
+
         const double dt = (config.cfl > 0.0)
                           ? physics::compute_cfl_dt(state, config.cfl)
                           : config.dt;
 
         // 1. Apply boundary conditions
+        Kokkos::fence(); auto t0 = Clock::now();
         bc.apply(state);
 
         // 2. Predict velocity (writes into u_star, v_star)
+        Kokkos::fence(); auto t1 = Clock::now();
         integrator.predict(state, bc, u_star, v_star, config.re, dt);
 
         // 3. Compute pressure Poisson RHS from divergence of u_star
+        Kokkos::fence(); auto t2 = Clock::now();
         physics::compute_pressure_rhs(state, u_star, v_star, dt, rhs);
 
         // 4. Solve pressure Poisson equation (reads rhs, writes s.p)
+        Kokkos::fence(); auto t3 = Clock::now();
         PressureSolveResult pres = pressure.solve(state, rhs);
 
         // 5. Correct velocity with pressure gradient
+        Kokkos::fence(); auto t4 = Clock::now();
         physics::correct_velocity(state, u_star, v_star, dt);
+        Kokkos::fence(); auto t5 = Clock::now();
+
+        stats_.wall_bc             += dur(t0, t1);
+        stats_.wall_predict        += dur(t1, t2);
+        stats_.wall_pressure_rhs   += dur(t2, t3);
+        stats_.wall_pressure_solve += dur(t3, t4);
+        stats_.wall_correct        += dur(t4, t5);
 
         if (state.step < state.n_steps) {
             state.ke_history(state.step)   = physics::compute_kinetic_energy(state);
@@ -103,7 +103,6 @@ struct Solver {
             }
         }
 
-        // Accumulate run statistics
         ++stats_.n_steps;
         stats_.dt_sum += dt;
         stats_.dt_min  = std::min(stats_.dt_min, dt);
@@ -115,14 +114,19 @@ struct Solver {
         stats_.pres_res_max      = std::max(stats_.pres_res_max, pres.final_residual);
 
         if constexpr (std::is_same_v<Integrator, CrankThatNicolson>) {
+            stats_.has_rbgs = true;
             const int    u_it  = integrator.last_u_result.iters;
             const int    v_it  = integrator.last_v_result.iters;
             const double u_res = integrator.last_u_result.final_residual;
             const double v_res = integrator.last_v_result.final_residual;
-            stats_.rbgs_iters_min    = std::min(stats_.rbgs_iters_min,  std::min(u_it, v_it));
-            stats_.rbgs_iters_max    = std::max(stats_.rbgs_iters_max,  std::max(u_it, v_it));
+            const int both_min = std::min(u_it, v_it);
+            const int both_max = std::max(u_it, v_it);
+            stats_.rbgs_iters_min    = (stats_.rbgs_iters_total == 0)
+                                       ? both_min
+                                       : std::min(stats_.rbgs_iters_min, both_min);
+            stats_.rbgs_iters_max    = std::max(stats_.rbgs_iters_max,  both_max);
             stats_.rbgs_iters_total += u_it + v_it;
-            stats_.rbgs_res_max      = std::max(stats_.rbgs_res_max,    std::max(u_res, v_res));
+            stats_.rbgs_res_max      = std::max(stats_.rbgs_res_max, std::max(u_res, v_res));
         }
 
         state.time += dt;
@@ -138,7 +142,7 @@ struct Solver {
             advance();
         }
 
-        double wall_s = std::chrono::duration<double>(
+        stats_.wall_total = std::chrono::duration<double>(
             std::chrono::steady_clock::now() - wall_start).count();
 
         output.write(state);
@@ -148,8 +152,11 @@ struct Solver {
             output.write_exact(state, config.re);
             output.write_error_norms(state);
         }
+        if (config.profile) {
+            output.write_run_stats(stats_, config);
+        }
 
-        print_report(wall_s);
+        print_report(stats_.wall_total);
     }
 
     void print_report(double wall_s) const {
@@ -194,6 +201,16 @@ struct Solver {
         std::cout << std::setw(28) << "    vcycles max"  << stats_.pres_iters_max << "\n";
         std::cout << std::scientific << std::setprecision(2);
         std::cout << std::setw(28) << "    max residual" << stats_.pres_res_max << "\n";
+
+        // Per-stage timing breakdown
+        auto pct = [&](double t) { return 100.0 * t / wall_s; };
+        std::cout << std::fixed << std::setprecision(3);
+        std::cout << "\n  Per-stage wall time:\n";
+        std::cout << std::setw(28) << "    BC (s)"            << stats_.wall_bc             << "  (" << std::setprecision(1) << pct(stats_.wall_bc)             << "%)\n";
+        std::cout << std::setprecision(3) << std::setw(28) << "    Predict (s)"       << stats_.wall_predict         << "  (" << std::setprecision(1) << pct(stats_.wall_predict)         << "%)\n";
+        std::cout << std::setprecision(3) << std::setw(28) << "    Pressure RHS (s)"  << stats_.wall_pressure_rhs    << "  (" << std::setprecision(1) << pct(stats_.wall_pressure_rhs)    << "%)\n";
+        std::cout << std::setprecision(3) << std::setw(28) << "    Pressure solve (s)"<< stats_.wall_pressure_solve  << "  (" << std::setprecision(1) << pct(stats_.wall_pressure_solve)  << "%)\n";
+        std::cout << std::setprecision(3) << std::setw(28) << "    Correct (s)"       << stats_.wall_correct         << "  (" << std::setprecision(1) << pct(stats_.wall_correct)         << "%)\n";
         std::cout << "\n";
     }
 };

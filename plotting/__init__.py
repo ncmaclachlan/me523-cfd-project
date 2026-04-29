@@ -14,6 +14,12 @@ from .diagnostics import (
     plot_timestep,
     plot_diagnostics,
 )
+from .scaling import (
+    load_run_stats,
+    plot_scaling,
+    plot_stage_breakdown,
+    plot_backend_comparison,
+)
 
 __all__ = [
     "load_snapshot",
@@ -29,4 +35,8 @@ __all__ = [
     "plot_error_norms",
     "plot_timestep",
     "plot_diagnostics",
+    "load_run_stats",
+    "plot_scaling",
+    "plot_stage_breakdown",
+    "plot_backend_comparison",
 ]
