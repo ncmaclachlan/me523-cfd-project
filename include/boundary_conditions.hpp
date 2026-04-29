@@ -3,6 +3,13 @@
 #include "pressure_solver.hpp"
 #include <Kokkos_Core.hpp>
 
+// Half-open i/j range over the velocity-face DOFs that the viscous solver
+// should iterate on. Excludes any face that the BC pins (Dirichlet) or
+// extrapolates (zero-gradient outflow) -- including those faces in GS
+// produces a residual floor because BC kernels overwrite the GS update
+// between sweeps.
+struct UVRange { int i_begin, i_end, j_begin, j_end; };
+
 struct LidDrivenCavityBC {
     double lid_velocity = 1.0;
 
@@ -13,6 +20,19 @@ struct LidDrivenCavityBC {
     static PressureBCSides pressure_sides() {
         return { PressureBC::Neumann, PressureBC::Neumann,
                  PressureBC::Neumann, PressureBC::Neumann };
+    }
+
+    // u-faces at i=u_i_begin and i=u_i_end-1 sit on the left/right walls
+    // (Dirichlet 0); skip them. Top/bottom u-faces are half a cell off the
+    // wall, so the half-cell-offset values ARE unknowns -- include them.
+    static UVRange u_solve_range(const MacGrid2D& g) {
+        return { g.u_i_begin() + 1, g.u_i_end() - 1,
+                 g.u_j_begin(),     g.u_j_end()     };
+    }
+    // v-faces at j=v_j_begin and j=v_j_end-1 sit on bottom/top walls.
+    static UVRange v_solve_range(const MacGrid2D& g) {
+        return { g.v_i_begin(),     g.v_i_end(),
+                 g.v_j_begin() + 1, g.v_j_end() - 1 };
     }
 
     void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {
@@ -68,6 +88,17 @@ struct PeriodicBC {
     static PressureBCSides pressure_sides() {
         return { PressureBC::Periodic, PressureBC::Periodic,
                  PressureBC::Periodic, PressureBC::Periodic };
+    }
+
+    // Skip the duplicate periodic face at u_i_end()-1 / v_j_end()-1; every
+    // other face is an independent unknown.
+    static UVRange u_solve_range(const MacGrid2D& g) {
+        return { g.u_i_begin(), g.u_i_end() - 1,
+                 g.u_j_begin(), g.u_j_end()     };
+    }
+    static UVRange v_solve_range(const MacGrid2D& g) {
+        return { g.v_i_begin(), g.v_i_end(),
+                 g.v_j_begin(), g.v_j_end() - 1 };
     }
 
     void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {
@@ -196,6 +227,20 @@ struct InflowOutflowBC {
                  PressureBC::Dirichlet,  // right  (outflow)
                  PressureBC::Neumann,    // bottom (symmetry)
                  PressureBC::Neumann };  // top    (symmetry)
+    }
+
+    // Inflow face (i=u_i_begin) is Dirichlet u=u_inf -- exclude.
+    // Outflow face (i=u_i_end-1) is set by zero-gradient extrapolation in
+    // apply_u after each sweep -- exclude. Top/bottom u-faces are
+    // half-cell-offset symmetry (Neumann), so they ARE unknowns.
+    static UVRange u_solve_range(const MacGrid2D& g) {
+        return { g.u_i_begin() + 1, g.u_i_end() - 1,
+                 g.u_j_begin(),     g.u_j_end()     };
+    }
+    // Top/bottom v-faces sit on the symmetry walls with v=0 (Dirichlet).
+    static UVRange v_solve_range(const MacGrid2D& g) {
+        return { g.v_i_begin(),     g.v_i_end(),
+                 g.v_j_begin() + 1, g.v_j_end() - 1 };
     }
 
     void apply_u(const MacGrid2D& g, Kokkos::View<double**> u) const {

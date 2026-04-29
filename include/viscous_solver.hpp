@@ -1,5 +1,6 @@
 #pragma once
 #include "sim_state.hpp"
+#include "boundary_conditions.hpp"
 #include "physics.hpp"
 #include <cmath>
 
@@ -25,22 +26,20 @@ struct ViscousSolver {
         const double inv_dy2  = 1.0 / (s.grid.dy * s.grid.dy);
         const double alpha    = dt / (2.0 * re);
         const double diag_inv = 1.0 / (1.0 + 2.0 * alpha * (inv_dx2 + inv_dy2));
-        // u has nx+1 stored faces in x but only nx are independent (the duplicate
-        // periodic face at u_i_end()-1 is excluded from the DOF count).
-        const int    ncells   = (s.grid.u_i_end() - s.grid.u_i_begin() - 1)
-                              * (s.grid.u_j_end() - s.grid.u_j_begin());
+
+        const UVRange r_u  = BC::u_solve_range(s.grid);
+        const int    ncells = (r_u.i_end - r_u.i_begin) * (r_u.j_end - r_u.j_begin);
+        if (ncells <= 0) return {0, 0.0};
 
         double rms = tol + 1.0;
         int    iter = 0;
         for (; iter < max_iters; ++iter) {
             bc.apply_u(s.grid, u_star);
 
-            // All three loops exclude u_i_end()-1 (the duplicate periodic face).
-            // apply_u syncs it after each half-sweep via the periodic_u_sync kernel.
             Kokkos::parallel_for("vs_u_red",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
-                    {s.grid.u_i_begin(), s.grid.u_j_begin()},
-                    {s.grid.u_i_end()-1, s.grid.u_j_end()}),
+                    {r_u.i_begin, r_u.j_begin},
+                    {r_u.i_end,   r_u.j_end}),
                 KOKKOS_LAMBDA(int i, int j) {
                     if ((i + j) % 2 != 0) return;
                     u_star(i, j) = (rhs(i, j)
@@ -53,8 +52,8 @@ struct ViscousSolver {
 
             Kokkos::parallel_for("vs_u_black",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
-                    {s.grid.u_i_begin(), s.grid.u_j_begin()},
-                    {s.grid.u_i_end()-1, s.grid.u_j_end()}),
+                    {r_u.i_begin, r_u.j_begin},
+                    {r_u.i_end,   r_u.j_end}),
                 KOKKOS_LAMBDA(int i, int j) {
                     if ((i + j) % 2 != 1) return;
                     u_star(i, j) = (rhs(i, j)
@@ -69,8 +68,8 @@ struct ViscousSolver {
             double res2 = 0.0;
             Kokkos::parallel_reduce("vs_u_res",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
-                    {s.grid.u_i_begin(), s.grid.u_j_begin()},
-                    {s.grid.u_i_end()-1, s.grid.u_j_end()}),
+                    {r_u.i_begin, r_u.j_begin},
+                    {r_u.i_end,   r_u.j_end}),
                 KOKKOS_LAMBDA(int i, int j, double& lsum) {
                     const double r = u_star(i, j)
                         - alpha * physics::laplacian(u_star, i, j, inv_dx2, inv_dy2)
@@ -93,20 +92,20 @@ struct ViscousSolver {
         const double inv_dy2  = 1.0 / (s.grid.dy * s.grid.dy);
         const double alpha    = dt / (2.0 * re);
         const double diag_inv = 1.0 / (1.0 + 2.0 * alpha * (inv_dx2 + inv_dy2));
-        // v has ny+1 stored faces in y but only ny are independent.
-        const int    ncells   = (s.grid.v_i_end() - s.grid.v_i_begin())
-                              * (s.grid.v_j_end() - s.grid.v_j_begin() - 1);
+
+        const UVRange r_v  = BC::v_solve_range(s.grid);
+        const int    ncells = (r_v.i_end - r_v.i_begin) * (r_v.j_end - r_v.j_begin);
+        if (ncells <= 0) return {0, 0.0};
 
         double rms = tol + 1.0;
         int    iter = 0;
         for (; iter < max_iters; ++iter) {
             bc.apply_v(s.grid, v_star);
 
-            // All three loops exclude v_j_end()-1 (the duplicate periodic face).
             Kokkos::parallel_for("vs_v_red",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
-                    {s.grid.v_i_begin(), s.grid.v_j_begin()},
-                    {s.grid.v_i_end(),   s.grid.v_j_end()-1}),
+                    {r_v.i_begin, r_v.j_begin},
+                    {r_v.i_end,   r_v.j_end}),
                 KOKKOS_LAMBDA(int i, int j) {
                     if ((i + j) % 2 != 0) return;
                     v_star(i, j) = (rhs(i, j)
@@ -120,8 +119,8 @@ struct ViscousSolver {
 
             Kokkos::parallel_for("vs_v_black",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
-                    {s.grid.v_i_begin(), s.grid.v_j_begin()},
-                    {s.grid.v_i_end(),   s.grid.v_j_end()-1}),
+                    {r_v.i_begin, r_v.j_begin},
+                    {r_v.i_end,   r_v.j_end}),
                 KOKKOS_LAMBDA(int i, int j) {
                     if ((i + j) % 2 != 1) return;
                     v_star(i, j) = (rhs(i, j)
@@ -136,8 +135,8 @@ struct ViscousSolver {
             double res2 = 0.0;
             Kokkos::parallel_reduce("vs_v_res",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
-                    {s.grid.v_i_begin(), s.grid.v_j_begin()},
-                    {s.grid.v_i_end(),   s.grid.v_j_end()-1}),
+                    {r_v.i_begin, r_v.j_begin},
+                    {r_v.i_end,   r_v.j_end}),
                 KOKKOS_LAMBDA(int i, int j, double& lsum) {
                     const double r = v_star(i, j)
                         - alpha * physics::laplacian(v_star, i, j, inv_dx2, inv_dy2)
